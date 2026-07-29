@@ -6,6 +6,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-28
+
+First stable release.
+
 ### Added
 
 - **Initial release.** Config-driven per-field access control that denies with
