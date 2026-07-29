@@ -1,0 +1,41 @@
+# PHPStan configuration for Field Guard.
+# Run on Drupal CI via commit-code-check.sh; phpstan-drupal is provided there.
+includes:
+  - phar://phpstan.phar/conf/bleedingEdge.neon
+
+parameters:
+  level: 6
+  # Inline @phpstan-ignore comments may not match across phpstan versions.
+  reportUnmatchedIgnoredErrors: false
+  paths:
+    - .
+  excludePaths:
+    # Optional (?): there is no vendor/ under the module in DrupalCI, where the
+    # module is analysed in place; the marker stops PHPStan erroring when it is absent.
+    - vendor (?)
+  fileExtensions:
+    - php
+    - module
+    - inc
+    - install
+  ignoreErrors:
+    # new static() is a Drupal best practice for plugins and services.
+    - "#^Unsafe usage of new static#"
+    - identifier: missingType.iterableValue
+    - identifier: missingType.generics
+    # The test suite uses PHPUnit attributes (#[Group], #[CoversClass],
+    # #[CoversFunction], #[RunTestsInSeparateProcesses]). This module supports
+    # Drupal 10.6, which ships PHPUnit 9 — a version with no
+    # PHPUnit\Framework\Attributes namespace at all. So when the previous-major
+    # job analyses against that stack, every attribute resolves to a missing
+    # class.
+    #
+    # This is a static-analysis artifact, not a defect: PHP attributes are inert
+    # unless something reflects on them, so PHPUnit 9 ignores them and the suite
+    # passes 17/17 on 10.6. The alternative — dropping to @group/@covers
+    # annotations — buys a clean previous-major report today at the cost of a
+    # rewrite when PHPUnit 12 removes annotation support, which would break the
+    # ^12 half of the version constraint.
+    #
+    # Reassess when the supported floor rises above Drupal 10.
+    - "#Attribute class PHPUnit.*Attributes.* does not exist#"
