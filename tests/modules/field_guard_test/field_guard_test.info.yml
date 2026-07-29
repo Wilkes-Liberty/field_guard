@@ -1,0 +1,8 @@
+name: 'Field Guard test'
+type: module
+description: 'Provides permissions for the Field Guard test suite. Do not enable on a real site.'
+core_version_requirement: ^10.6 || ^11.3 || ^12
+package: Testing
+hidden: true
+dependencies:
+  - field_guard:field_guard

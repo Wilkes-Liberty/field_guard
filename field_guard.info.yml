@@ -1,0 +1,8 @@
+name: Field Guard
+type: module
+description: 'Config-driven per-field access control that fails closed. Denies with AccessResult::forbidden(), which no permission, admin role, or user 1 can override.'
+core_version_requirement: ^10.6 || ^11.3 || ^12
+package: Security
+dependencies:
+  - drupal:field
+  - drupal:user

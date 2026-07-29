@@ -1,0 +1,13 @@
+# Protected field map.
+#
+# Shape: protected.<entity_type>.<bundle>.<field_name>.<operation> = <permission>
+#
+# Operations are Drupal's field operations: 'view' and 'edit'. An operation that is
+# absent is NOT protected -- omission is how you leave a field open, deliberately.
+#
+# Field Guard defines no permissions of its own. Name any permission your site or
+# another module already provides; Field Guard only ever checks whether it has been
+# explicitly granted.
+#
+# Ships empty, so installing the module changes nothing until you configure it.
+protected: {  }

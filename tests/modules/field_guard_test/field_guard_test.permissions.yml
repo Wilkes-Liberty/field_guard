@@ -1,0 +1,7 @@
+# Field Guard itself defines no permissions -- it checks whatever permission a site
+# names in its map. The suite therefore needs permissions of its own to point at.
+'view guarded field':
+  title: 'View guarded field (test)'
+
+'edit guarded field':
+  title: 'Edit guarded field (test)'

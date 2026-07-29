@@ -1,0 +1,8 @@
+services:
+  logger.channel.field_guard:
+    parent: 'logger.channel_base'
+    arguments: ['field_guard']
+
+  field_guard.field_map:
+    class: Drupal\field_guard\ProtectedFieldMap
+    arguments: ['@config.factory']

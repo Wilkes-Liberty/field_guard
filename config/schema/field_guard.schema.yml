@@ -1,0 +1,19 @@
+field_guard.settings:
+  type: config_object
+  label: 'Field Guard settings'
+  mapping:
+    protected:
+      type: sequence
+      label: 'Protected fields, keyed by entity type'
+      sequence:
+        type: sequence
+        label: 'Bundles'
+        sequence:
+          type: sequence
+          label: 'Fields'
+          sequence:
+            type: sequence
+            label: 'Operations'
+            sequence:
+              type: string
+              label: 'Required permission'

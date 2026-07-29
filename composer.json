@@ -1,0 +1,37 @@
+{
+    "name": "drupal/field_guard",
+    "description": "Config-driven per-field access control that fails closed, including on the definition-level checks JSON:API and Views use for filtering and sorting.",
+    "type": "drupal-module",
+    "keywords": [
+        "Drupal",
+        "field",
+        "access control",
+        "field access",
+        "permissions",
+        "security",
+        "jsonapi",
+        "views"
+    ],
+    "homepage": "https://www.drupal.org/project/field_guard",
+    "license": "GPL-2.0-or-later",
+    "minimum-stability": "dev",
+    "authors": [
+        {
+            "name": "Jeremy Michael Cerda",
+            "email": "jmcerda@wilkesliberty.com",
+            "role": "Maintainer"
+        },
+        {
+            "name": "Wilkes & Liberty, LLC",
+            "homepage": "https://wilkesliberty.com",
+            "role": "Sponsor"
+        }
+    ],
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/field_guard",
+        "source": "https://git.drupalcode.org/project/field_guard"
+    },
+    "require": {
+        "drupal/core": "^10.6 || ^11.3 || ^12"
+    }
+}
