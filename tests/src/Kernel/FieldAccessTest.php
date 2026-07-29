@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\field_guard\Kernel;
 
+use Drupal\Core\Cache\CacheableDependencyInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\entity_test\Entity\EntityTest;
 use Drupal\field\Entity\FieldConfig;
@@ -215,6 +216,11 @@ final class FieldAccessTest extends KernelTestBase {
     $account = $this->createUser();
 
     $result = $this->entity->get('field_evidence_date')->access('view', $account, TRUE);
+
+    // AccessResultInterface does not declare getCacheContexts(); that lives on
+    // CacheableDependencyInterface. Narrowing here keeps the assertion honest
+    // about what the return contract actually guarantees.
+    $this->assertInstanceOf(CacheableDependencyInterface::class, $result);
     $this->assertContains('user.permissions', $result->getCacheContexts());
   }
 

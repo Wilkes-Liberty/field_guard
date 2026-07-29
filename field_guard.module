@@ -131,8 +131,6 @@ function field_guard_entity_field_access(
  *
  * @return bool
  *   TRUE when a non-admin role held by the account grants the permission.
- *
- * @internal
  */
 function _field_guard_has_explicit_permission(AccountInterface $account, string $permission): bool {
   $storage = \Drupal::entityTypeManager()->getStorage('user_role');
