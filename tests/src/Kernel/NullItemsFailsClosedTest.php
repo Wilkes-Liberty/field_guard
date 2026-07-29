@@ -24,12 +24,12 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
  * $items is NULL, which silently downgrades its deny on exactly the paths that
  * ask the definition-level question:
  *
- *   - JSON:API  FieldResolver::getFieldAccess()  — is this field filterable/sortable?
- *   - Views     EntityField::access()            — should this handler be removed?
+ * - JSON:API: FieldResolver::getFieldAccess() — may this field be filtered?
+ * - Views: EntityField::access() — should this handler be removed?
  *
- * Neutral there means the filter is permitted and the Views handler survives, so a
- * protected value can be probed by an exposed filter even though it is never
- * rendered. Upstream issue #3003914, open since 2021.
+ * Neutral there means the filter is permitted and the Views handler survives,
+ * so a protected value can be probed by an exposed filter even though it is
+ * never rendered. Upstream issue #3003914, open since 2021.
  *
  * If this test ever fails, the module has acquired that same hole.
  */
@@ -120,11 +120,11 @@ final class NullItemsFailsClosedTest extends KernelTestBase {
   }
 
   /**
-   * The deny is unconditional at definition level, including for the permission holder.
+   * Definition-level denial is unconditional, even for permission holders.
    *
    * There is no entity in scope, so there is no way to tell a legitimate filter
-   * from a probe. Denying both is the intended trade, and pinning it here stops a
-   * well-meaning future change from "fixing" it into a hole.
+   * from a probe. Denying both is the intended trade, and pinning it here stops
+   * a well-meaning future change from "fixing" it into a hole.
    */
   public function testDefinitionLevelCheckDeniesEvenWithPermission(): void {
     $account = $this->createUser(['view guarded field']);
@@ -164,7 +164,7 @@ final class NullItemsFailsClosedTest extends KernelTestBase {
   }
 
   /**
-   * Sanity check on the premise: with an entity in scope the permission decides.
+   * Sanity check: with an entity in scope, the permission decides.
    *
    * Without this, the two tests above would pass equally well if the module
    * denied everything unconditionally.

@@ -9,7 +9,6 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Tests\UnitTestCase;
 use Drupal\field_guard\ProtectedFieldMap;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 
 /**
@@ -48,21 +47,25 @@ final class ProtectedFieldMapTest extends UnitTestCase {
 
   /**
    * A miss on any axis is unprotected — protection is never inherited.
+   *
+   * Deliberately a loop rather than a data provider. This module supports
+   * Drupal 10.6, which ships PHPUnit 9; that version honours only the docblock
+   * annotation form and ignores the attribute, so an attribute-driven provider
+   * passes zero arguments and the test dies with ArgumentCountError. Carrying
+   * both forms works but invites a double-provide once the annotation form is
+   * removed. A loop behaves identically on every PHPUnit version, and the
+   * per-case message keeps a failure just as readable.
+   *
+   * Note the annotation name is spelled out nowhere in this docblock on
+   * purpose: PHPUnit scans comments for it and would treat a mention as a real
+   * declaration, failing with "Method ::() does not exist".
    */
-  #[DataProvider('missProvider')]
-  public function testMissesAreUnprotected(string $entityType, ?string $bundle, string $field, string $operation): void {
+  public function testMissesAreUnprotected(): void {
     $map = $this->mapWith([
       'profile' => ['compliance_record' => ['field_evidence_date' => ['view' => 'view guarded field']]],
     ]);
 
-    $this->assertNull($map->requiredPermission($entityType, $bundle, $field, $operation));
-  }
-
-  /**
-   * Cases that must not match.
-   */
-  public static function missProvider(): array {
-    return [
+    $misses = [
       'other entity type' => ['node', 'compliance_record', 'field_evidence_date', 'view'],
       'other bundle' => ['profile', 'engagement', 'field_evidence_date', 'view'],
       'other field' => ['profile', 'compliance_record', 'field_other', 'view'],
@@ -70,13 +73,20 @@ final class ProtectedFieldMapTest extends UnitTestCase {
       'null bundle (base field)' => ['profile', NULL, 'field_evidence_date', 'view'],
       'unknown operation' => ['profile', 'compliance_record', 'field_evidence_date', 'delete'],
     ];
+
+    foreach ($misses as $case => [$entity_type, $bundle, $field, $operation]) {
+      $this->assertNull(
+        $map->requiredPermission($entity_type, $bundle, $field, $operation),
+        sprintf('Unprotected for the "%s" case.', $case),
+      );
+    }
   }
 
   /**
    * An empty permission string is a misconfiguration, not a total lockout.
    *
-   * Treating '' as "a permission nobody holds" would deny everyone with no way to
-   * tell from the config that anything was wrong.
+   * Treating '' as "a permission nobody holds" would deny everyone with no way
+   * to tell from the config that anything was wrong.
    */
   public function testEmptyPermissionIsTreatedAsUnset(): void {
     $map = $this->mapWith([

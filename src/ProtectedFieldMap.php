@@ -11,9 +11,9 @@ use Drupal\Core\Config\ConfigFactoryInterface;
  *
  * The map is configuration rather than a hardcoded array for two reasons. It is
  * diffable and reviewable in `config/sync`, and on a deploy that runs
- * `drush config:import` it is reverted to the repository on every release — so a
- * live edit that widens access does not survive. That property is the reason to
- * prefer config here even though code would be marginally faster.
+ * `drush config:import` it is reverted to the repository on every release — so
+ * a live edit that widens access does not survive. That property is the reason
+ * to prefer config here even though code would be marginally faster.
  */
 final class ProtectedFieldMap {
 
@@ -21,8 +21,8 @@ final class ProtectedFieldMap {
    * Field operations this module understands.
    *
    * Drupal's field access API only ever passes 'view' or 'edit'. Anything else
-   * is a caller error and is treated as unprotected rather than silently denied,
-   * so a future core operation cannot lock a site out of its own data.
+   * is a caller error and is treated as unprotected rather than silently
+   * denied, so a future core operation cannot lock a site out of its own data.
    */
   private const OPERATIONS = ['view', 'edit'];
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ruleset name="file_gate">
-  <description>PHP CodeSniffer ruleset for the File Gate module.</description>
+<ruleset name="field_guard">
+  <description>PHP CodeSniffer ruleset for the Field Guard module.</description>
 
   <!-- Scan the module itself. -->
   <file>.</file>
