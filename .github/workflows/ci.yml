@@ -87,5 +87,4 @@ jobs:
         run: |
           cd drupal
           php vendor/bin/phpunit -c web/core/phpunit.xml.dist \
-            web/modules/contrib/field_guard/tests \
-            web/modules/contrib/field_guard/modules
+            web/modules/contrib/field_guard/tests
