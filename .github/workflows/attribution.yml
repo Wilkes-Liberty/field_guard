@@ -54,7 +54,15 @@ jobs:
       # with no admin bypass. This job carries no `if:` and always reports.
       - name: Scan commits, title and body
         run: |
-          python3 .github/scripts/check-attribution.py \
+          set -euo pipefail
+          SCRIPT="$RUNNER_TEMP/check-attribution.py"
+          if git cat-file -e "${{ github.event.pull_request.base.sha }}:.github/scripts/check-attribution.py" 2>/dev/null; then
+            git show "${{ github.event.pull_request.base.sha }}:.github/scripts/check-attribution.py" > "$SCRIPT"
+          else
+            # Bootstrap: the base SHA predates this gate, so use the checked-out copy.
+            cp .github/scripts/check-attribution.py "$SCRIPT"
+          fi
+          python3 "$SCRIPT" \
             --base "${{ github.event.pull_request.base.sha }}" \
             --head "${{ github.event.pull_request.head.sha }}" \
             --title-file "$RUNNER_TEMP/pr-title.txt" \
