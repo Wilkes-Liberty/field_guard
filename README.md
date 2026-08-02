@@ -96,6 +96,16 @@ and they are true of every field-access approach:
 - **Audit.** Drupal does not log field reads. `ProtectedFieldMap::isProtected()` is provided
   as the seam for a consumer that wants to record them.
 
+### Do not guard workflow fields on `edit`
+
+Never map `moderation_state`, `status`, or any field whose legal values depend on the
+value being *replaced*, on the `edit` operation. During a JSON:API/REST PATCH, core
+checks field edit-access against the **stored** value
+(`EntityResource::checkPatchFieldAccess()`), not the incoming one — so an edit-guard on a
+workflow field forbids legitimate transitions after computing its answer against the
+wrong state. Enforce publish/transition policy with a validation constraint, which sees
+the incoming value; guard `view` here freely.
+
 ## Relationship to Field Permissions
 
 [`field_permissions`](https://www.drupal.org/project/field_permissions) solves an overlapping

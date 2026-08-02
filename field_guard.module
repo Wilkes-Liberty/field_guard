@@ -40,10 +40,10 @@ use Drupal\Core\Session\AccountInterface;
  * CalculatedPermissionsItem::hasPermission()) and none of them participates in
  * AccessResult folding.
  *
- * That is deliberate. A compliance attestation the subject or an administrator
- * can silently rewrite is not evidence of anything — and under an
- * immutable-backup regime a falsified date cannot be recalled. The legitimate
- * way to write one is to hold 'record personnel evidence', which is a grant
+ * That is deliberate. A record the subject or an administrator can silently
+ * rewrite is not evidence of anything — and under an immutable-backup regime a
+ * falsified value cannot be recalled. The legitimate way to write one is to
+ * hold the permission the site's map names for the field, which is a grant
  * that appears in a config diff.
  */
 function field_guard_entity_field_access(
@@ -89,15 +89,34 @@ function field_guard_entity_field_access(
   // there is no way to distinguish a legitimate filter from a probe at this
   // layer.
   if ($items === NULL) {
+    // Cacheability: this verdict is the SAME for every account — it does not
+    // consult $account at all — so it carries no user cache context. It
+    // previously carried 'user.permissions', which fragmented the cache per
+    // permission set for an identical answer. It does depend on the guarded-
+    // field map, so it takes the map's cache tags (config:field_guard.settings)
+    // and nothing else.
+    //
+    // This is the one path where the metadata is actually consumed: JSON:API's
+    // FieldResolver::getFieldAccess() calls fieldAccess() with
+    // $return_as_object = TRUE
+    // (core/modules/jsonapi/src/Context/FieldResolver.php:763) and folds the
+    // result into the cacheable response. The render path calls it with FALSE
+    // and discards the metadata entirely, so correctness there rests on the
+    // render array, not on us.
     return AccessResult::forbidden(
-      'Personnel fields cannot be filtered or sorted on; access requires an entity context.'
-    )->addCacheContexts(['user.permissions']);
+      'Guarded fields cannot be filtered or sorted on; access requires an entity context.'
+    )->addCacheableDependency($map);
   }
 
+  // The value-level verdict DOES depend on the account (which roles the
+  // account holds and those roles' permission lists), so the user contexts
+  // stay. The map dependency is added because whether this field is guarded
+  // at all comes from config — without it a settings change leaves the
+  // previous verdict cached.
   return AccessResult::forbiddenIf(
     !_field_guard_has_explicit_permission($account, $permission),
     sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
-  )->addCacheContexts(['user.roles', 'user.permissions']);
+  )->addCacheContexts(['user.roles', 'user.permissions'])->addCacheableDependency($map);
 }
 
 /**
@@ -133,15 +152,18 @@ function field_guard_entity_field_access(
  *   TRUE when a non-admin role held by the account grants the permission.
  */
 function _field_guard_has_explicit_permission(AccountInterface $account, string $permission): bool {
-  $storage = \Drupal::entityTypeManager()->getStorage('user_role');
+  // One loadMultiple rather than a load() per role. Field access runs once per
+  // field per entity, so a listing of N entities with M guarded fields reaches
+  // this function N*M times; the per-role loop turned each of those into a
+  // storage call per role. Entity storage does keep a static cache, so the
+  // saving is smaller than it looks — but the single call is both cheaper on
+  // the first pass and clearer.
+  $roles = \Drupal::entityTypeManager()
+    ->getStorage('user_role')
+    ->loadMultiple($account->getRoles());
 
-  foreach ($account->getRoles() as $role_id) {
-    /** @var \Drupal\user\RoleInterface|null $role */
-    $role = $storage->load($role_id);
-    if ($role === NULL) {
-      continue;
-    }
-
+  foreach ($roles as $role) {
+    /** @var \Drupal\user\RoleInterface $role */
     // Skip is_admin roles: their permission list is "everything", so consulting
     // it would reintroduce the bypass this function exists to close.
     if ($role->isAdmin()) {

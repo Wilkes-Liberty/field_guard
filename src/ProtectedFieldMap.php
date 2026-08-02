@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\field_guard;
 
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Cache\CacheableDependencyInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 
 /**
@@ -11,11 +13,16 @@ use Drupal\Core\Config\ConfigFactoryInterface;
  *
  * The map is configuration rather than a hardcoded array for two reasons. It is
  * diffable and reviewable in `config/sync`, and on a deploy that runs
- * `drush config:import` it is reverted to the repository on every release — so
- * a live edit that widens access does not survive. That property is the reason
- * to prefer config here even though code would be marginally faster.
+ * `drush config:import` it is reverted to the repository on every release —
+ * so a live edit that widens access does not survive. That property is the
+ * reason to prefer config here even though code would be marginally faster.
  */
-final class ProtectedFieldMap {
+final class ProtectedFieldMap implements CacheableDependencyInterface {
+
+  /**
+   * The configuration object holding the map.
+   */
+  private const SETTINGS = 'field_guard.settings';
 
   /**
    * Field operations this module understands.
@@ -55,9 +62,7 @@ final class ProtectedFieldMap {
       return NULL;
     }
 
-    $protected = $this->configFactory
-      ->get('field_guard.settings')
-      ->get('protected') ?? [];
+    $protected = $this->settings()->get('protected') ?? [];
 
     $permission = $protected[$entityTypeId][$bundle][$fieldName][$operation] ?? NULL;
 
@@ -80,6 +85,47 @@ final class ProtectedFieldMap {
       }
     }
     return FALSE;
+  }
+
+  /**
+   * Loads the settings config object.
+   */
+  private function settings() {
+    return $this->configFactory->get(self::SETTINGS);
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * The map itself varies by nothing — it is the same for every account.
+   * Callers that make an ACCOUNT-dependent decision from it must add their own
+   * user
+   * contexts; callers whose verdict is unconditional must not, or they fragment
+   * the cache per permission set for an answer that is identical for everyone.
+   */
+  public function getCacheContexts(): array {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Delegates to the config object, which carries `config:field_guard.settings`
+   * (ConfigBase implements RefinableCacheableDependencyInterface). This is the
+   * invalidation that was missing: without it, a cached access verdict
+   * outlives the config change that should have altered it — and because this
+   * module only ever denies, the stale direction is a field staying readable
+   * after it was protected.
+   */
+  public function getCacheTags(): array {
+    return $this->settings()->getCacheTags();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCacheMaxAge(): int {
+    return Cache::PERMANENT;
   }
 
 }
