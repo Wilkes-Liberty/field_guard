@@ -67,14 +67,25 @@ jobs:
 
       - name: Build a Drupal codebase
         run: |
-          composer create-project drupal/recommended-project:${{ matrix.drupal }} drupal \
+          retry() {
+            local n
+            for n in 1 2 3; do
+              "$@" && return 0
+              if [ "$n" -lt 3 ]; then
+                echo "::warning::attempt $n of 3 failed: $1 $2 - retrying"
+                sleep $((15 * n))
+              fi
+            done
+            return 1
+          }
+          retry composer create-project drupal/recommended-project:${{ matrix.drupal }} drupal \
             --no-interaction --stability dev --no-install
           cd drupal
           composer config minimum-stability dev
           composer config prefer-stable true
           composer config --no-plugins allow-plugins true
           composer config repositories.field_guard path ../field_guard_src
-          composer require \
+          retry composer require \
             drupal/core-dev:${{ matrix.drupal }} \
             'drupal/field_guard:*@dev' \
             'firebase/php-jwt:^6.10 || ^7.0' \
