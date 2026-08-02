@@ -12,8 +12,26 @@ field_guard.settings:
           type: sequence
           label: 'Fields'
           sequence:
-            type: sequence
+            type: mapping
             label: 'Operations'
-            sequence:
-              type: string
-              label: 'Required permission'
+            # A closed set, deliberately. ProtectedFieldMap::OPERATIONS honours only
+            # 'view' and 'edit', and an unrecognised key is treated as unprotected --
+            # so a typo ('viewed', 'Edit', 'delete') would silently leave the field
+            # open while this config claims it is protected. Modelled as a mapping
+            # rather than a sequence so that typo is a schema violation at save time
+            # instead of a quietly ignored key.
+            #
+            # The three outer levels stay sequences on purpose: their keys are
+            # genuinely arbitrary (entity type, bundle, field name), and `sequence` is
+            # how Drupal models a variable-keyed map -- see filter.format.*.filters,
+            # a sequence keyed by filter plugin ID. There is no "wildcard mapping" type.
+            #
+            # Both keys are optional: omitting one is how you protect an operation
+            # without protecting the other.
+            mapping:
+              view:
+                type: string
+                label: 'Permission required to view the field'
+              edit:
+                type: string
+                label: 'Permission required to edit the field'

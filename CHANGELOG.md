@@ -6,6 +6,42 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-02
+
+### Fixed
+- **Access verdicts now invalidate when the map changes (#7).** `ProtectedFieldMap`
+  implements `CacheableDependencyInterface`, delegating to the settings config
+  object, and both verdict paths add it as a cacheable dependency — so every
+  verdict carries `config:field_guard.settings`. Without it a cached verdict
+  outlived the config change that produced it, and because this module only ever
+  denies, the stale direction was a field staying readable after it was
+  protected. This metadata is consumed on exactly the path the module exists to
+  close: JSON:API's `FieldResolver::getFieldAccess()` folds it into the cacheable
+  response; the render path discards it.
+- **The definition-level (NULL `$items`) verdict no longer carries
+  `user.permissions` (#7).** That verdict never consults the account — it is
+  identical for everyone — and the context only fragmented the cache per
+  permission set. The value-level verdict keeps its user contexts; both now also
+  carry the config dependency.
+- **A typo in the operation key is now a schema violation (#7).** The operation
+  level of `field_guard.settings` is a closed `view`/`edit` mapping instead of an
+  open sequence. Previously `viewed:` or `Edit:` validated silently and left the
+  field unprotected while the config claimed otherwise. A `ConfigSchemaTest`
+  pins typo-rejection; a 216-line `CacheabilityTest` pins the metadata above.
+
+### Changed
+- **One `loadMultiple()` instead of a `load()` per role** in the explicit-
+  permission check. Field access runs once per field per entity, so listings
+  reach it N×M times; the per-role loop made each pass a storage call per role.
+- **README now warns against guarding workflow fields on `edit`.** Field
+  edit-access is checked against the *stored* value during a JSON:API/REST
+  PATCH (`EntityResource::checkPatchFieldAccess()`), so mapping
+  `moderation_state` or `status` on `edit` forbids legitimate transitions
+  computed against the wrong value.
+- The forbidden reason on definition-level checks and an interior docblock no
+  longer say "personnel" — leftovers from the codebase this module was
+  extracted from.
+
 ## [1.0.1] - 2026-07-30
 
 ### Changed
