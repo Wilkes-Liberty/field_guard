@@ -84,6 +84,37 @@ Configuration rather than a hardcoded array is deliberate: it is diffable and re
 on a deploy that runs `drush config:import` it is reverted to the repository on every
 release, so a live edit that widens access does not survive.
 
+### Letting the record's subject read their own record
+
+```yaml
+protected:
+  paragraph:
+    client_document:
+      field_client_file:
+        view: 'manage client documents'
+        view_exempt_own_subject: true
+```
+
+Some guarded fields are records *about* a user, stored on that user's account — directly, or
+on a composition entity (a paragraph, an inline entity) hanging from it. `view_exempt_own_subject: true`
+makes the **view** guard stand aside when the entity carrying the field ultimately roots at
+the acting user's own account. The module still never grants: it returns neutral and ordinary
+entity and field access decide.
+
+The host chain is resolved by duck-typing on `getParentEntity()` (Paragraphs and friends),
+depth-capped and cycle-guarded, and it fails closed — an unresolvable chain, an orphan, or a
+root that is not the acting user exempts nothing. Anonymous is never a subject.
+
+Scope is deliberate, and narrow:
+
+- **View only.** There is no edit counterpart and there never will be: a record its subject
+  can rewrite is not evidence. The edit guard on the same field is untouched.
+- **The definition-level deny is untouched.** Without an entity there is no subject, so
+  filter/sort probing stays closed for everyone, subject included.
+- **Opt-in per field.** Only a boolean `true` enables it; any other value fails closed.
+- **Everyone else is still denied**, administrators and uid 1 included, exactly as before.
+  Named permission holders still pass.
+
 ## What it does not cover
 
 Be clear-eyed about the boundary. These are properties of Drupal, not gaps in this module,

@@ -6,3 +6,6 @@ services:
   field_guard.field_map:
     class: Drupal\field_guard\ProtectedFieldMap
     arguments: ['@config.factory']
+
+  field_guard.host_chain_walker:
+    class: Drupal\field_guard\HostChainWalker

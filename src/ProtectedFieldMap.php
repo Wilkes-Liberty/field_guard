@@ -73,6 +73,29 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
   }
 
   /**
+   * Returns TRUE when a field's view guard exempts the record's own subject.
+   *
+   * Opt-in, per field, view only. TRUE means: when the entity the field sits
+   * on ultimately hangs from the acting user's own account, the view guard
+   * stands aside (returns neutral) instead of forbidding. Edit is never
+   * exempted — a record its subject can rewrite is not evidence — and the
+   * definition-level (filter/sort) deny is likewise untouched.
+   *
+   * Only a boolean TRUE enables the exemption. Any other value — including a
+   * truthy string from a hand-edited YAML — is treated as absent, so a
+   * malformed entry fails closed.
+   */
+  public function viewExemptsOwnSubject(string $entityTypeId, ?string $bundle, string $fieldName): bool {
+    if ($bundle === NULL) {
+      return FALSE;
+    }
+
+    $protected = $this->settings()->get('protected') ?? [];
+
+    return ($protected[$entityTypeId][$bundle][$fieldName]['view_exempt_own_subject'] ?? NULL) === TRUE;
+  }
+
+  /**
    * Returns TRUE when the field is protected for at least one operation.
    *
    * Used by callers that need to know whether a field is in scope at all —

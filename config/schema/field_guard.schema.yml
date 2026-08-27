@@ -35,3 +35,11 @@ field_guard.settings:
               edit:
                 type: string
                 label: 'Permission required to edit the field'
+              # Opt-in, view only. TRUE stands the view guard down when the
+              # entity carrying the field ultimately hangs from the acting
+              # user's OWN account (duck-typed getParentEntity() walk). There
+              # is deliberately no edit counterpart: a record its subject can
+              # rewrite is not evidence. Only boolean true enables it.
+              view_exempt_own_subject:
+                type: boolean
+                label: 'Exempt the record subject from the view guard'
