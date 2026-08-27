@@ -6,6 +6,21 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Opt-in own-subject view exemption (`view_exempt_own_subject`).** A guarded
+  field may declare that its **view** guard stands aside when the entity
+  carrying the field ultimately roots at the acting user's own account — for
+  records about a user stored on that user's account, directly or on a nested
+  composition entity. The host chain is duck-typed on `getParentEntity()`
+  (new `field_guard.host_chain_walker` service), depth-capped, cycle-guarded,
+  and fail-closed: an unresolvable chain, an orphan root, or anonymous exempts
+  nothing. The module still never grants — the exempt verdict is neutral, and
+  it carries the `user` cache context plus every chain entity as a cacheable
+  dependency. Edit guards, the definition-level (filter/sort) deny, and the
+  deny against every non-subject — administrators and uid 1 included — are
+  untouched; only boolean `true` enables the flag.
+
 ### Changed
 
 - **CI: the attribution check is now the shared workflow.**

@@ -17,6 +17,7 @@ use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Implements hook_entity_field_access().
@@ -108,6 +109,44 @@ function field_guard_entity_field_access(
     )->addCacheableDependency($map);
   }
 
+  // Own-subject view exemption: opt-in per field, view only. When the map
+  // flags the field and the entity it sits on ultimately hangs from the
+  // acting user's OWN account, this module stands aside with neutral — it
+  // never grants, so ordinary entity and field access still decide. The
+  // subject reading a record about themselves is not the threat this module
+  // exists to remove; the subject REWRITING it is, which is why there is no
+  // edit counterpart and why the definition-level deny above still applies
+  // (an own-subject filter probe is indistinguishable from any other probe).
+  if ($operation === 'view'
+    && $map->viewExemptsOwnSubject(
+      $field_definition->getTargetEntityTypeId(),
+      $field_definition->getTargetBundle(),
+      $field_definition->getName(),
+    )
+  ) {
+    /** @var \Drupal\field_guard\HostChainWalker $walker */
+    $walker = \Drupal::service('field_guard.host_chain_walker');
+    $chain = $walker->chain($items->getEntity());
+
+    $verdict = _field_guard_chain_is_own_subject($chain, $account)
+      ? AccessResult::neutral()
+      : AccessResult::forbiddenIf(
+          !_field_guard_has_explicit_permission($account, $permission),
+          sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
+        );
+
+    // The verdict varies per user IDENTITY (not merely per permission set) and
+    // per host chain: re-parenting any link flips ownership. 'user' subsumes
+    // the role/permission contexts; each chain entity contributes its tags so
+    // a re-parent invalidates the cached verdict. A NULL chain (cycle, depth
+    // cap) fails closed above — cover at least the host entity itself.
+    $verdict->addCacheContexts(['user'])->addCacheableDependency($map);
+    foreach ($chain ?? [$items->getEntity()] as $link) {
+      $verdict->addCacheableDependency($link);
+    }
+    return $verdict;
+  }
+
   // The value-level verdict DOES depend on the account (which roles the
   // account holds and those roles' permission lists), so the user contexts
   // stay. The map dependency is added because whether this field is guarded
@@ -117,6 +156,33 @@ function field_guard_entity_field_access(
     !_field_guard_has_explicit_permission($account, $permission),
     sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
   )->addCacheContexts(['user.roles', 'user.permissions'])->addCacheableDependency($map);
+}
+
+/**
+ * Decides whether a resolved host chain roots at the acting user's account.
+ *
+ * The root must be a User entity that IS the acting account. Anonymous never
+ * owns a record. A NULL chain means the walk could not establish a root
+ * (cycle, depth cap, or a broken parent accessor) — that is a refusal, not an
+ * unknown: an exemption must rest on a proven subject.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface[]|null $chain
+ *   The host chain from HostChainWalker::chain(), root last, or NULL.
+ * @param \Drupal\Core\Session\AccountInterface $account
+ *   The acting account.
+ *
+ * @return bool
+ *   TRUE when the chain's root is the acting user's own account.
+ */
+function _field_guard_chain_is_own_subject(?array $chain, AccountInterface $account): bool {
+  if ($chain === NULL || !$account->isAuthenticated()) {
+    return FALSE;
+  }
+
+  $root = end($chain);
+
+  return $root instanceof UserInterface
+    && (int) $root->id() === (int) $account->id();
 }
 
 /**
