@@ -128,19 +128,30 @@ function field_guard_entity_field_access(
     $walker = \Drupal::service('field_guard.host_chain_walker');
     $chain = $walker->chain($items->getEntity());
 
-    $verdict = _field_guard_chain_is_own_subject($chain, $account)
-      ? AccessResult::neutral()
-      : AccessResult::forbiddenIf(
-          !_field_guard_has_explicit_permission($account, $permission),
-          sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
-        );
+    if (_field_guard_chain_is_own_subject($chain, $account)) {
+      // Depends on identity (which uid is asking) and on the chain, nothing
+      // else — the subject needs no permission.
+      $verdict = AccessResult::neutral()->addCacheContexts(['user']);
+    }
+    else {
+      // A non-subject on a flagged field is exactly the ordinary
+      // permission-based verdict, plus the ownership question. It therefore
+      // needs BOTH the identity context ('user' — two accounts with identical
+      // roles get different answers when one is the subject) AND the
+      // role/permission contexts: 'user' alone keys the cache per uid but
+      // carries nothing that changes when a role's permission list changes,
+      // so a cached verdict would outlive a grant or a revocation.
+      $verdict = AccessResult::forbiddenIf(
+        !_field_guard_has_explicit_permission($account, $permission),
+        sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
+      )->addCacheContexts(['user', 'user.roles', 'user.permissions']);
+    }
 
-    // The verdict varies per user IDENTITY (not merely per permission set) and
-    // per host chain: re-parenting any link flips ownership. 'user' subsumes
-    // the role/permission contexts; each chain entity contributes its tags so
-    // a re-parent invalidates the cached verdict. A NULL chain (cycle, depth
-    // cap) fails closed above — cover at least the host entity itself.
-    $verdict->addCacheContexts(['user'])->addCacheableDependency($map);
+    // Both arms depend on the map and on the host chain: re-parenting any
+    // link flips ownership, and each chain entity's tags invalidate the
+    // cached verdict when that happens. A NULL chain (cycle, depth cap)
+    // fails closed above — cover at least the host entity itself.
+    $verdict->addCacheableDependency($map);
     foreach ($chain ?? [$items->getEntity()] as $link) {
       $verdict->addCacheableDependency($link);
     }

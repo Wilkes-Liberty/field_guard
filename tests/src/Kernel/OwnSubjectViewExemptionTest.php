@@ -119,6 +119,11 @@ final class OwnSubjectViewExemptionTest extends KernelTestBase {
 
   /**
    * Any other unprivileged account stays forbidden.
+   *
+   * The non-subject verdict on a flagged field is still permission-based, so
+   * it must keep the role/permission cache contexts — 'user' alone keys the
+   * cache per uid but carries nothing that changes when a role's permission
+   * list changes, and a cached verdict would outlive a grant or revocation.
    */
   public function testOtherAccountRemainsForbidden(): void {
     $other = $this->createUser();
@@ -130,6 +135,10 @@ final class OwnSubjectViewExemptionTest extends KernelTestBase {
       $result->isForbidden(),
       'The exemption is for the subject alone.',
     );
+    $this->assertInstanceOf(CacheableDependencyInterface::class, $result);
+    $this->assertContains('user', $result->getCacheContexts());
+    $this->assertContains('user.roles', $result->getCacheContexts());
+    $this->assertContains('user.permissions', $result->getCacheContexts());
   }
 
   /**
