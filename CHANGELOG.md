@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-27
+
 ### Added
 
 - **Opt-in own-subject view exemption (`view_exempt_own_subject`).** A guarded
@@ -17,9 +19,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and fail-closed: an unresolvable chain, an orphan root, or anonymous exempts
   nothing. The module still never grants — the exempt verdict is neutral, and
   it carries the `user` cache context plus every chain entity as a cacheable
-  dependency. Edit guards, the definition-level (filter/sort) deny, and the
-  deny against every non-subject — administrators and uid 1 included — are
-  untouched; only boolean `true` enables the flag.
+  dependency, while the non-subject verdict on a flagged field keeps the
+  role/permission cache contexts alongside `user`. Edit guards, the
+  definition-level (filter/sort) deny, and the deny against every
+  non-subject — administrators and uid 1 included — are untouched; only
+  boolean `true` enables the flag.
 
 ### Changed
 
