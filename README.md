@@ -159,3 +159,8 @@ vendor/bin/phpunit -c web/core modules/contrib/field_guard/tests
 The one worth reading is `tests/src/Kernel/NullItemsFailsClosedTest.php`. It pins the
 definition-level behaviour so this module cannot quietly acquire the failure mode it was
 written to avoid.
+
+## Maintainers
+
+- [Jeremy Michael Cerda](https://www.drupal.org/u/jmcerda) — <jmcerda@wilkesliberty.com>
+- Wilkes & Liberty, LLC — [drupal.org/u/wilkes-liberty](https://www.drupal.org/u/wilkes-liberty)
