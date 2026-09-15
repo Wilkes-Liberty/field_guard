@@ -29,10 +29,11 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
  *
  * Two properties are pinned here, both regressions that review caught:
  *
- * 1. Every verdict carries `config:field_guard.settings`. Without it a
- *    cached verdict outlives the config change that should have altered it —
- *    and because this module only ever denies, the stale direction is a field
- *    staying readable after it was protected. That is the failure that matters.
+ * 1. Every verdict carries `config:field_guard.settings`, including the
+ *    unprotected early return. Without it a cached verdict outlives the
+ *    config change that should have altered it — and because this module
+ *    only ever denies, the stale direction is a field staying readable
+ *    after it was protected. That is the failure that matters.
  * 2. The definition-level (NULL $items) verdict carries NO user cache context.
  *    It never consults $account, so varying it per permission set fragmented
  *    the cache for an answer identical for everyone. The value-level verdict
@@ -86,6 +87,18 @@ final class CacheabilityTest extends KernelTestBase {
       'label' => 'Evidence date',
     ])->save();
 
+    FieldStorageConfig::create([
+      'field_name' => 'field_open',
+      'entity_type' => 'entity_test',
+      'type' => 'string',
+    ])->save();
+    FieldConfig::create([
+      'field_name' => 'field_open',
+      'entity_type' => 'entity_test',
+      'bundle' => 'entity_test',
+      'label' => 'Not protected',
+    ])->save();
+
     $this->config('field_guard.settings')
       ->set('protected', [
         'entity_test' => [
@@ -107,6 +120,16 @@ final class CacheabilityTest extends KernelTestBase {
       ->getFieldDefinitions('entity_test', 'entity_test');
 
     return $definitions['field_evidence_date'];
+  }
+
+  /**
+   * Returns an unmapped field definition on the same bundle.
+   */
+  private function unprotectedDefinition(): FieldDefinitionInterface {
+    $definitions = $this->container->get('entity_field.manager')
+      ->getFieldDefinitions('entity_test', 'entity_test');
+
+    return $definitions['field_open'];
   }
 
   /**
@@ -212,6 +235,47 @@ final class CacheabilityTest extends KernelTestBase {
       'user.roles',
       $contexts,
       'The value-level verdict is derived from the roles the account holds; without user.roles one account\'s verdict can be served to another.',
+    );
+  }
+
+  /**
+   * An unprotected definition-level verdict carries the settings cache tag.
+   *
+   * Yesterday this field was not in the map; today it may be. Neutral without
+   * the map tag is the stale direction CHANGELOG names: a field staying
+   * readable after it was protected.
+   */
+  public function testUnprotectedDefinitionLevelVerdictCarriesTheSettingsCacheTag(): void {
+    $result = $this->handler()
+      ->fieldAccess('view', $this->unprotectedDefinition(), $this->createUser(), NULL, TRUE);
+
+    $this->assertFalse($result->isForbidden(), 'Premise: an unmapped field is not denied.');
+    $this->assertContains(
+      self::SETTINGS_TAG,
+      $result->getCacheTags(),
+      'An unprotected verdict still comes from the map, so it must invalidate when the map changes.',
+    );
+  }
+
+  /**
+   * An unprotected value-level verdict carries the settings cache tag.
+   */
+  public function testUnprotectedValueLevelVerdictCarriesTheSettingsCacheTag(): void {
+    $entity = EntityTest::create([
+      'name' => 'x',
+      'field_evidence_date' => '2026-08-01',
+      'field_open' => 'public value',
+    ]);
+    $entity->save();
+
+    $result = $entity->get('field_open')
+      ->access('view', $this->createUser(), TRUE);
+
+    $this->assertFalse($result->isForbidden(), 'Premise: an unmapped field is not denied.');
+    $this->assertContains(
+      self::SETTINGS_TAG,
+      $result->getCacheTags(),
+      'Whether this field is unprotected at all comes from config, so the verdict must carry the config tag.',
     );
   }
 

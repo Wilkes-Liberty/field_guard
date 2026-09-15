@@ -65,9 +65,11 @@ function field_guard_entity_field_access(
 
   // Not a field we were told to protect. Stay silent: neutral folds away under
   // orIf and cannot widen access another module intended to restrict. This
-  // module only ever denies — it never grants.
+  // module only ever denies — it never grants. Still take the map's cache
+  // tags: an untagged neutral can outlive the config change that protects
+  // the field.
   if ($permission === NULL) {
-    return AccessResult::neutral();
+    return AccessResult::neutral()->addCacheableDependency($map);
   }
 
   // Fail closed on a definition-level check.
