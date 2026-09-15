@@ -258,7 +258,7 @@ final class CacheabilityTest extends KernelTestBase {
   }
 
   /**
-   * An unprotected value-level verdict is also invalidated by a settings change.
+   * An unprotected value-level verdict carries the settings cache tag.
    */
   public function testUnprotectedValueLevelVerdictCarriesTheSettingsCacheTag(): void {
     $entity = EntityTest::create([
