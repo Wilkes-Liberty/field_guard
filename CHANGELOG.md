@@ -6,6 +6,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-09-15
+
+### Fixed
+- **Unprotected-field neutrals now carry the map's cache tags.** An untagged
+  `neutral()` could outlive the config change that starts protecting the field.
+
+### Changed
+- Maintainer author homepage now points at the drupal.org profile.
+
 ## [1.2.0] - 2026-08-27
 
 ### Added
