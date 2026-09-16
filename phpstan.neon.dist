@@ -19,8 +19,6 @@ parameters:
     - inc
     - install
   ignoreErrors:
-    # new static() is a Drupal best practice for plugins and services.
-    - "#^Unsafe usage of new static#"
     - identifier: missingType.iterableValue
     - identifier: missingType.generics
     # The test suite uses PHPUnit attributes (#[Group], #[CoversClass],
@@ -32,7 +30,7 @@ parameters:
     #
     # This is a static-analysis artifact, not a defect: PHP attributes are inert
     # unless something reflects on them, so PHPUnit 9 ignores them and the suite
-    # passes 17/17 on 10.6. The alternative — dropping to @group/@covers
+    # passes 43/43 on 10.6. The alternative — dropping to @group/@covers
     # annotations — buys a clean previous-major report today at the cost of a
     # rewrite when PHPUnit 12 removes annotation support, which would break the
     # ^12 half of the version constraint.
