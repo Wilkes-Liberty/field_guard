@@ -11,31 +11,6 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 /**
  * Pins the shape of the protected-field map's config schema.
- *
- * The map is four levels deep: entity type > bundle > field name > operation.
- * The three outer levels have genuinely arbitrary keys and are `sequence`,
- * which is how Drupal models a variable-keyed map — see
- * `filter.format.*.filters`, a
- * sequence keyed by filter plugin ID. There is no "wildcard mapping" type, and
- * these levels must stay sequences or the module stops accepting new entity
- * types, bundles and fields.
- *
- * The innermost level is different: `ProtectedFieldMap::OPERATIONS` honours
- * only 'view' and 'edit', and `requiredPermission()` returns NULL for anything
- * else. So an unrecognised operation key does not error — it silently leaves
- * the field UNPROTECTED while the config claims otherwise. Modelling that
- * level as a closed `mapping` turns the typo into a schema violation.
- *
- * Measured before the change: `['viewed' => '…']` produced **zero** violations
- * and saved without complaint. After: one violation, "'viewed' is not a
- * supported key."
- *
- * How far this protection reaches, stated honestly: `ConfigSchemaChecker`
- * throws
- * on save only when `strictConfigSchema` is on, which is kernel tests and
- * therefore CI. `drush config:import` on a live site does **not** run schema
- * validation, so this is a development-and-CI gate plus executable
- * documentation of the closed set — not a runtime guard.
  */
 #[Group('field_guard')]
 #[RunTestsInSeparateProcesses]
@@ -117,11 +92,7 @@ final class ConfigSchemaTest extends KernelTestBase {
   /**
    * An unrecognised operation key is rejected instead of silently ignored.
    *
-   * This is the regression this test exists for. `requiredPermission()` returns
-   * NULL for an operation outside OPERATIONS, so before the schema was
-   * tightened a typo left the field readable while the config claimed it was
-   * protected —
-   * and nothing anywhere reported it.
+   * A typo'd operation key must violate schema.
    */
   public function testUnrecognisedOperationKeyIsRejected(): void {
     foreach (['viewed', 'Edit', 'delete', 'update'] as $typo) {
@@ -142,11 +113,6 @@ final class ConfigSchemaTest extends KernelTestBase {
 
   /**
    * The three outer levels still accept arbitrary keys.
-   *
-   * Guards against someone "correcting" them into mappings too, which would
-   * stop the module accepting entity types, bundles and fields it was not
-   * shipped
-   * knowing about — the whole point of it being config.
    */
   public function testOuterLevelsAcceptArbitraryKeys(): void {
     $data = [

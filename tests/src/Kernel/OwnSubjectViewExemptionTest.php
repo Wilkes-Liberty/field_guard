@@ -17,13 +17,6 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Pins the opt-in own-subject view exemption and everything it must NOT relax.
- *
- * The feature exists for records that are ABOUT a user and stored ON that
- * user's account (directly, or on a composition entity hanging from it): the
- * site may decide the subject reading their own record is fine while keeping
- * every other property of the guard — the write protection, the
- * definition-level deny, and the deny against everyone else, administrators
- * included.
  */
 #[Group('field_guard')]
 #[RunTestsInSeparateProcesses]

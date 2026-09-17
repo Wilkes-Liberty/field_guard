@@ -14,20 +14,9 @@ field_guard.settings:
           sequence:
             type: mapping
             label: 'Operations'
-            # A closed set, deliberately. ProtectedFieldMap::OPERATIONS honours only
-            # 'view' and 'edit', and an unrecognised key is treated as unprotected --
-            # so a typo ('viewed', 'Edit', 'delete') would silently leave the field
-            # open while this config claims it is protected. Modelled as a mapping
-            # rather than a sequence so that typo is a schema violation at save time
-            # instead of a quietly ignored key.
-            #
-            # The three outer levels stay sequences on purpose: their keys are
-            # genuinely arbitrary (entity type, bundle, field name), and `sequence` is
-            # how Drupal models a variable-keyed map -- see filter.format.*.filters,
-            # a sequence keyed by filter plugin ID. There is no "wildcard mapping" type.
-            #
-            # Both keys are optional: omitting one is how you protect an operation
-            # without protecting the other.
+            # A closed set, deliberately. ProtectedFieldMap::OPERATIONS honours
+            # only 'view' and 'edit'. The three outer levels stay sequences on
+            # purpose: their keys are genuinely arbitrary.
             mapping:
               view:
                 type: string
@@ -35,11 +24,7 @@ field_guard.settings:
               edit:
                 type: string
                 label: 'Permission required to edit the field'
-              # Opt-in, view only. TRUE stands the view guard down when the
-              # entity carrying the field ultimately hangs from the acting
-              # user's OWN account (duck-typed getParentEntity() walk). There
-              # is deliberately no edit counterpart: a record its subject can
-              # rewrite is not evidence. Only boolean true enables it.
+              # Opt-in, view only. Only boolean true enables it.
               view_exempt_own_subject:
                 type: boolean
                 label: 'Exempt the record subject from the view guard'

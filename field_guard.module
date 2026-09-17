@@ -4,10 +4,7 @@
  * @file
  * Config-driven per-field access control that fails closed.
  *
- * See README.md for the threat model. The short version:
- * hook_entity_field_access returning AccessResult::forbidden() is the only
- * verdict in Drupal's stack with no permission-based override, and this module
- * is a thin, auditable wrapper around that fact.
+ * See README.md for the threat model.
  */
 
 declare(strict_types=1);
@@ -21,31 +18,6 @@ use Drupal\user\UserInterface;
 
 /**
  * Implements hook_entity_field_access().
- *
- * Why forbidden() and not neutral():
- *
- * EntityAccessControlHandler::fieldAccess() folds every hook result together
- * with orIf() (EntityAccessControlHandler.php:369) and AccessResult::orIf()
- * short-circuits to forbidden when either side is forbidden
- * (AccessResult.php:308-309). AccessResultForbidden declares no orIf()
- * override, so that contagion is total. fieldAccess() itself contains no
- * admin-permission check at all — unlike checkAccess(), there is no field-level
- * equivalent of the entity-level admin bypass, and the entity-level one is
- * skipped outright once a hook has forbidden
- * (EntityAccessControlHandler.php:108).
- *
- * The practical consequence, which is the entire point of this module: the
- * denial holds against 'administer users'/'administer profile', against a role
- * with is_admin: TRUE, and against uid 1. Those are all permission-level
- * mechanisms (SuperUserAccessPolicy.php:20-24 ->
- * CalculatedPermissionsItem::hasPermission()) and none of them participates in
- * AccessResult folding.
- *
- * That is deliberate. A record the subject or an administrator can silently
- * rewrite is not evidence of anything — and under an immutable-backup regime a
- * falsified value cannot be recalled. The legitimate way to write one is to
- * hold the permission the site's map names for the field, which is a grant
- * that appears in a config diff.
  */
 function field_guard_entity_field_access(
   string $operation,
@@ -73,52 +45,17 @@ function field_guard_entity_field_access(
   }
 
   // Fail closed on a definition-level check.
-  //
-  // JSON:API's FieldResolver::getFieldAccess() and Views' EntityField::access()
-  // both call this hook with $items = NULL, to decide whether a field may be
-  // FILTERED or SORTED on rather than whether a particular value may be read.
-  // drupal/field_permissions returns neutral in exactly this case
-  // (field_permissions.module:35-38), which is why a value-aware deny fails
-  // open on those paths — a defect acknowledged upstream as issue #3003914 and
-  // unfixed since 2021.
-  //
-  // We deny instead. If the caller will not say which entity it means, it does
-  // not get the field. This also removes the Views handler at definition time,
-  // which is what stops an exposed date filter from being used to binary-search
-  // a protected value that is never rendered.
-  //
-  // Note this makes protected fields non-filterable and non-sortable for
-  // everyone, including holders of the permission. That is the intended trade:
-  // there is no way to distinguish a legitimate filter from a probe at this
-  // layer.
   if ($items === NULL) {
-    // Cacheability: this verdict is the SAME for every account — it does not
-    // consult $account at all — so it carries no user cache context. It
-    // previously carried 'user.permissions', which fragmented the cache per
-    // permission set for an identical answer. It does depend on the guarded-
-    // field map, so it takes the map's cache tags (config:field_guard.settings)
-    // and nothing else.
-    //
-    // This is the one path where the metadata is actually consumed: JSON:API's
-    // FieldResolver::getFieldAccess() calls fieldAccess() with
-    // $return_as_object = TRUE
-    // (core/modules/jsonapi/src/Context/FieldResolver.php:763) and folds the
-    // result into the cacheable response. The render path calls it with FALSE
-    // and discards the metadata entirely, so correctness there rests on the
-    // render array, not on us.
+    // Same for every account — it does not consult $account — so it carries
+    // no user cache context. It depends on the map, so it takes the map's
+    // cache tags and nothing else.
     return AccessResult::forbidden(
       'Guarded fields cannot be filtered or sorted on; access requires an entity context.'
     )->addCacheableDependency($map);
   }
 
-  // Own-subject view exemption: opt-in per field, view only. When the map
-  // flags the field and the entity it sits on ultimately hangs from the
-  // acting user's OWN account, this module stands aside with neutral — it
-  // never grants, so ordinary entity and field access still decide. The
-  // subject reading a record about themselves is not the threat this module
-  // exists to remove; the subject REWRITING it is, which is why there is no
-  // edit counterpart and why the definition-level deny above still applies
-  // (an own-subject filter probe is indistinguishable from any other probe).
+  // Own-subject view exemption: opt-in per field, view only. There is no
+  // edit counterpart, and the definition-level deny above still applies.
   if ($operation === 'view'
     && $map->viewExemptsOwnSubject(
       $field_definition->getTargetEntityTypeId(),
@@ -143,10 +80,8 @@ function field_guard_entity_field_access(
       // role/permission contexts: 'user' alone keys the cache per uid but
       // carries nothing that changes when a role's permission list changes,
       // so a cached verdict would outlive a grant or a revocation.
-      $verdict = AccessResult::forbiddenIf(
-        !_field_guard_has_explicit_permission($account, $permission),
-        sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
-      )->addCacheContexts(['user', 'user.roles', 'user.permissions']);
+      $verdict = _field_guard_explicit_permission_verdict($account, $permission)
+        ->addCacheContexts(['user', 'user.roles', 'user.permissions']);
     }
 
     // Both arms depend on the map and on the host chain: re-parenting any
@@ -165,10 +100,9 @@ function field_guard_entity_field_access(
   // stay. The map dependency is added because whether this field is guarded
   // at all comes from config — without it a settings change leaves the
   // previous verdict cached.
-  return AccessResult::forbiddenIf(
-    !_field_guard_has_explicit_permission($account, $permission),
-    sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
-  )->addCacheContexts(['user.roles', 'user.permissions'])->addCacheableDependency($map);
+  return _field_guard_explicit_permission_verdict($account, $permission)
+    ->addCacheContexts(['user.roles', 'user.permissions'])
+    ->addCacheableDependency($map);
 }
 
 /**
@@ -199,28 +133,35 @@ function _field_guard_chain_is_own_subject(?array $chain, AccountInterface $acco
 }
 
 /**
+ * Builds the explicit-permission access verdict for a guarded field.
+ *
+ * Cache contexts stay with the caller: the default path needs role/permission;
+ * the non-subject arm of own-subject also needs 'user'.
+ *
+ * @param \Drupal\Core\Session\AccountInterface $account
+ *   The account to test.
+ * @param string $permission
+ *   The permission that must be explicitly granted.
+ *
+ * @return \Drupal\Core\Access\AccessResultInterface
+ *   Forbidden when the permission is not explicitly granted.
+ */
+function _field_guard_explicit_permission_verdict(
+  AccountInterface $account,
+  string $permission,
+): AccessResultInterface {
+  return AccessResult::forbiddenIf(
+    !_field_guard_has_explicit_permission($account, $permission),
+    sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
+  );
+}
+
+/**
  * Checks whether a permission is EXPLICITLY granted by a non-admin role.
  *
  * This deliberately does not use AccountInterface::hasPermission(). That method
  * returns TRUE for every permission when the account holds a role with
- * is_admin: TRUE, or when it is uid 1 (SuperUserAccessPolicy.php:20-24 adds a
- * CalculatedPermissionsItem whose isAdmin flag short-circuits
- * CalculatedPermissionsItem::hasPermission() at :64-66). Gating on it would
- * mean administrators and uid 1 silently pass every check — which is exactly
- * the property this module exists to remove.
- *
- * The forbidden verdict returned by the caller genuinely cannot be overridden
- * by any permission, role or uid. But that only matters once we have DECIDED to
- * forbid; the decision itself must not be delegated to a permission calculation
- * that hands admins everything. This function is that distinction, and it is
- * the subtle part of the module.
- *
- * The practical effect: to read or write a protected field you must hold a role
- * that names the permission in its own configuration. Granting it is therefore
- * a visible line in a `config/sync` diff, reviewed like any other change —
- * rather than something inherited by virtue of being an administrator.
- * Separation of duty is the goal: an attestation the site administrator can
- * rewrite without leaving a trace is not evidence.
+ * is_admin: TRUE, or when it is uid 1.
  *
  * @param \Drupal\Core\Session\AccountInterface $account
  *   The account to test.
@@ -231,12 +172,6 @@ function _field_guard_chain_is_own_subject(?array $chain, AccountInterface $acco
  *   TRUE when a non-admin role held by the account grants the permission.
  */
 function _field_guard_has_explicit_permission(AccountInterface $account, string $permission): bool {
-  // One loadMultiple rather than a load() per role. Field access runs once per
-  // field per entity, so a listing of N entities with M guarded fields reaches
-  // this function N*M times; the per-role loop turned each of those into a
-  // storage call per role. Entity storage does keep a static cache, so the
-  // saving is smaller than it looks — but the single call is both cheaper on
-  // the first pass and clearer.
   $roles = \Drupal::entityTypeManager()
     ->getStorage('user_role')
     ->loadMultiple($account->getRoles());
