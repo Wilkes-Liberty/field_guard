@@ -124,9 +124,6 @@ final class FieldAccessTest extends KernelTestBase {
 
   /**
    * View and edit are separate grants.
-   *
-   * Reading an attestation about yourself and authoring one are different acts,
-   * and the permission split is what makes the record trustworthy as evidence.
    */
   public function testViewPermissionDoesNotGrantEdit(): void {
     $account = $this->createUser(['view guarded field']);
@@ -158,12 +155,6 @@ final class FieldAccessTest extends KernelTestBase {
 
   /**
    * An is_admin role does not bypass the deny. Intended.
-   *
-   * This works because the module tests for an EXPLICIT grant rather than
-   * calling AccountInterface::hasPermission(), which returns TRUE for every
-   * permission on an is_admin role. Gating on hasPermission() would let admins
-   * through silently -- an earlier draft did exactly that, and this test is
-   * what caught it.
    */
   public function testAdminRoleIsForbidden(): void {
     $account = $this->createUser([], 'admin-ish', TRUE);
@@ -176,10 +167,7 @@ final class FieldAccessTest extends KernelTestBase {
    * User 1 does not bypass the deny. Intended.
    *
    * SuperUserAccessPolicy grants uid 1 every permission, so any hasPermission()
-   * check would pass. The explicit-grant test is what makes the deny real: uid
-   * 1 holds no non-admin role naming the permission, so it is forbidden like
-   * anyone else -- and can be granted access deliberately, on a named role, if
-   * wanted.
+   * check would pass.
    */
   public function testUidOneIsForbidden(): void {
     $root = $this->container->get('entity_type.manager')

@@ -17,21 +17,6 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Pins the definition-level (NULL $items) behaviour.
- *
- * This is the regression test for the reason this module exists rather than
- * drupal/field_permissions. That module's guard clause
- * (field_permissions.module:35-38) returns AccessResult::neutral() whenever
- * $items is NULL, which silently downgrades its deny on exactly the paths that
- * ask the definition-level question:
- *
- * - JSON:API: FieldResolver::getFieldAccess() — may this field be filtered?
- * - Views: EntityField::access() — should this handler be removed?
- *
- * Neutral there means the filter is permitted and the Views handler survives,
- * so a protected value can be probed by an exposed filter even though it is
- * never rendered. Upstream issue #3003914, open since 2021.
- *
- * If this test ever fails, the module has acquired that same hole.
  */
 #[Group('field_guard')]
 #[RunTestsInSeparateProcesses]

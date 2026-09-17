@@ -10,12 +10,6 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 
 /**
  * Resolves which permission, if any, guards a given field operation.
- *
- * The map is configuration rather than a hardcoded array for two reasons. It is
- * diffable and reviewable in `config/sync`, and on a deploy that runs
- * `drush config:import` it is reverted to the repository on every release —
- * so a live edit that widens access does not survive. That property is the
- * reason to prefer config here even though code would be marginally faster.
  */
 final class ProtectedFieldMap implements CacheableDependencyInterface {
 
@@ -74,16 +68,6 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
 
   /**
    * Returns TRUE when a field's view guard exempts the record's own subject.
-   *
-   * Opt-in, per field, view only. TRUE means: when the entity the field sits
-   * on ultimately hangs from the acting user's own account, the view guard
-   * stands aside (returns neutral) instead of forbidding. Edit is never
-   * exempted — a record its subject can rewrite is not evidence — and the
-   * definition-level (filter/sort) deny is likewise untouched.
-   *
-   * Only a boolean TRUE enables the exemption. Any other value — including a
-   * truthy string from a hand-edited YAML — is treated as absent, so a
-   * malformed entry fails closed.
    */
   public function viewExemptsOwnSubject(string $entityTypeId, ?string $bundle, string $fieldName): bool {
     if ($bundle === NULL) {
@@ -119,12 +103,6 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
 
   /**
    * {@inheritdoc}
-   *
-   * The map itself varies by nothing — it is the same for every account.
-   * Callers that make an ACCOUNT-dependent decision from it must add their own
-   * user
-   * contexts; callers whose verdict is unconditional must not, or they fragment
-   * the cache per permission set for an answer that is identical for everyone.
    */
   public function getCacheContexts(): array {
     return [];
@@ -132,13 +110,6 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
 
   /**
    * {@inheritdoc}
-   *
-   * Delegates to the config object, which carries `config:field_guard.settings`
-   * (ConfigBase implements RefinableCacheableDependencyInterface). This is the
-   * invalidation that was missing: without it, a cached access verdict
-   * outlives the config change that should have altered it — and because this
-   * module only ever denies, the stale direction is a field staying readable
-   * after it was protected.
    */
   public function getCacheTags(): array {
     return $this->settings()->getCacheTags();

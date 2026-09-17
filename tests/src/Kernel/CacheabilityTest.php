@@ -17,29 +17,6 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Pins the cache metadata on the access verdicts.
- *
- * Cacheability on this hook is not decoration. It is consumed on exactly one
- * path, and that path is the one the module cares most about: JSON:API's
- * FieldResolver::getFieldAccess() calls fieldAccess() with
- * $return_as_object = TRUE
- * (core/modules/jsonapi/src/Context/FieldResolver.php:763)
- * and folds the result into the cacheable response. The render path calls
- * fieldAccess() with $return_as_object = FALSE and discards the metadata
- * entirely, so nothing this hook returns can protect it.
- *
- * Two properties are pinned here, both regressions that review caught:
- *
- * 1. Every verdict carries `config:field_guard.settings`, including the
- *    unprotected early return. Without it a cached verdict outlives the
- *    config change that should have altered it — and because this module
- *    only ever denies, the stale direction is a field staying readable
- *    after it was protected. That is the failure that matters.
- * 2. The definition-level (NULL $items) verdict carries NO user cache context.
- *    It never consults $account, so varying it per permission set fragmented
- *    the cache for an answer identical for everyone. The value-level verdict
- *    does consult the account, so it keeps its user contexts — asserted here
- *    so a future "optimisation" cannot quietly drop them and start serving
- *    one account's verdict to another.
  */
 #[Group('field_guard')]
 #[RunTestsInSeparateProcesses]
@@ -240,10 +217,6 @@ final class CacheabilityTest extends KernelTestBase {
 
   /**
    * An unprotected definition-level verdict carries the settings cache tag.
-   *
-   * Yesterday this field was not in the map; today it may be. Neutral without
-   * the map tag is the stale direction CHANGELOG names: a field staying
-   * readable after it was protected.
    */
   public function testUnprotectedDefinitionLevelVerdictCarriesTheSettingsCacheTag(): void {
     $result = $this->handler()
