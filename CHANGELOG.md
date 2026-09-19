@@ -6,6 +6,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-09-19
+
+### Changed
+- Kernel and unit tests declare PHPUnit 9 `@group` and
+  `@runTestsInSeparateProcesses` annotations so both test trees are
+  discovered on Drupal 10.6's PHPUnit 9.
+
 ## [1.3.0] - 2026-09-19
 
 ### Added
