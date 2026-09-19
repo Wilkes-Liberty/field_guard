@@ -184,7 +184,7 @@ jobs:
         env:
           SIMPLETEST_DB: 'sqlite://localhost/:memory:'
           SYMFONY_DEPRECATIONS_HELPER: disabled
-          MIN_MCP_TESTS: '8'
+          MIN_MCP_TESTS: '10'
         run: |
           set -euo pipefail
           cd drupal
