@@ -14,6 +14,10 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Proves the service applies the rule the access hook applies.
+ *
+ * @group field_guard
+ *
+ * @runTestsInSeparateProcesses
  */
 #[Group('field_guard')]
 #[RunTestsInSeparateProcesses]

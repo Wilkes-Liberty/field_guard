@@ -17,6 +17,10 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Proves the deny holds for every principal it is supposed to hold against.
+ *
+ * @group field_guard
+ *
+ * @runTestsInSeparateProcesses
  */
 #[Group('field_guard')]
 #[RunTestsInSeparateProcesses]

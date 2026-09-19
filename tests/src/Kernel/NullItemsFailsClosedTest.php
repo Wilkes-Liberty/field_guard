@@ -17,6 +17,10 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Pins the definition-level (NULL $items) behaviour.
+ *
+ * @group field_guard
+ *
+ * @runTestsInSeparateProcesses
  */
 #[Group('field_guard')]
 #[RunTestsInSeparateProcesses]

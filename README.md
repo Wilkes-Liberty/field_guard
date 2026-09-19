@@ -208,7 +208,7 @@ choose on whether you want a UI or a config file.
 ## Testing
 
 ```bash
-vendor/bin/phpunit -c web/core modules/contrib/field_guard/tests
+vendor/bin/phpunit -c web/core modules/contrib/field_guard
 ```
 
 The one worth reading is `tests/src/Kernel/NullItemsFailsClosedTest.php`. It pins the

@@ -17,6 +17,10 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Pins the cache metadata on the access verdicts.
+ *
+ * @group field_guard
+ *
+ * @runTestsInSeparateProcesses
  */
 #[Group('field_guard')]
 #[RunTestsInSeparateProcesses]

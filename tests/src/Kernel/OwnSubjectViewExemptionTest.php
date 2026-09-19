@@ -17,6 +17,10 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 
 /**
  * Pins the opt-in own-subject view exemption and everything it must NOT relax.
+ *
+ * @group field_guard
+ *
+ * @runTestsInSeparateProcesses
  */
 #[Group('field_guard')]
 #[RunTestsInSeparateProcesses]

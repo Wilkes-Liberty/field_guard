@@ -13,6 +13,10 @@ use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Covers the lookup rules, including the ones that are easy to get wrong.
+ *
+ * @group field_guard
+ *
+ * @runTestsInSeparateProcesses
  */
 #[Group('field_guard')]
 #[CoversClass(ProtectedFieldMap::class)]
