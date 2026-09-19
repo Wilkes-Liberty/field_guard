@@ -104,3 +104,112 @@ jobs:
           cd drupal
           php vendor/bin/phpunit -c web/core/phpunit.xml.dist \
             web/modules/contrib/field_guard/tests
+
+  # The optional field_guard_mcp submodule (#3624447). Tool API and MCP Sentinel
+  # support Drupal 10.6 and 11.3 and later, not Drupal 12, so they are installed
+  # here only. The job above holds the base module alone and keeps proving it
+  # needs neither. Each core branch the submodule declares gets a leg; a floor
+  # leg pins its minor, because ^11.3 resolves to the newest 11.x.
+  mcp:
+    name: MCP tools (Drupal ${{ matrix.drupal }}, PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { drupal: '10.6', constraint: '~10.6.0', php: '8.3' }
+          - { drupal: '11.3', constraint: '~11.3.0', php: '8.3' }
+          - { drupal: '11', constraint: '^11.4', php: '8.3' }
+    steps:
+      - name: Check out module
+        uses: actions/checkout@v4
+        with:
+          path: field_guard_src
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: gd, pdo_sqlite, sqlite3
+          tools: composer:v2
+          coverage: none
+
+      - name: Build a Drupal codebase with Tool API and MCP Sentinel
+        env:
+          DRUPAL_CONSTRAINT: ${{ matrix.constraint }}
+          EXPECTED_DRUPAL: ${{ matrix.drupal }}
+        run: |
+          retry() {
+            rc=0
+            for n in 1 2 3; do
+              "$@" && return 0
+              rc=$?
+              if [ "$n" -lt 3 ]; then
+                echo "::warning::attempt $n of 3 failed (exit $rc): $* - retrying"
+                sleep "$((15 * n))"
+              fi
+            done
+            return "$rc"
+          }
+          scaffold() {
+            rm -rf drupal
+            composer create-project "drupal/recommended-project:${DRUPAL_CONSTRAINT}" drupal \
+              --no-interaction --no-install
+          }
+          retry scaffold
+          cd drupal
+          composer config minimum-stability dev
+          composer config prefer-stable true
+          composer config --no-plugins allow-plugins true
+          composer config repositories.field_guard path ../field_guard_src
+          retry composer require \
+            "drupal/core-dev:${DRUPAL_CONSTRAINT}" \
+            'drupal/field_guard:*@dev' \
+            'drupal/mcp_sentinel:^2.22' \
+            'drupal/tool:^1.0.0-beta8' \
+            --no-interaction --with-all-dependencies
+
+          test -L web/modules/contrib/field_guard \
+            || { echo "::error::field_guard is not symlinked to the working copy"; exit 1; }
+          core="$(php -r 'require "vendor/autoload.php"; echo \Composer\InstalledVersions::getPrettyVersion("drupal/core");')"
+          echo "Drupal core: ${core}"
+          composer show --no-ansi drupal/mcp_sentinel | sed -n '1,4p'
+          composer show --no-ansi drupal/tool | sed -n '1,4p'
+          case "${core}" in
+            "${EXPECTED_DRUPAL}".*) ;;
+            *) echo "::error::Leg claims Drupal ${EXPECTED_DRUPAL} but resolved ${core}."; exit 1 ;;
+          esac
+
+      - name: Run the Field Guard MCP suite
+        env:
+          SIMPLETEST_DB: 'sqlite://localhost/:memory:'
+          SYMFONY_DEPRECATIONS_HELPER: disabled
+          MIN_MCP_TESTS: '8'
+        run: |
+          set -euo pipefail
+          cd drupal
+          # Absolute paths: the tests run in separate processes, and PHPUnit 9
+          # on the Drupal 10.6 leg hands a relative -c path to a child process
+          # that does not share this working directory.
+          php vendor/bin/phpunit -c "${PWD}/web/core/phpunit.xml.dist" \
+            --log-junit "${PWD}/junit-mcp.xml" \
+            "${PWD}/web/modules/contrib/field_guard/modules/field_guard_mcp/tests"
+
+          # Count the tests that ran. The suite skips itself when Tool API or
+          # MCP Sentinel is missing, and a skipped test is still a <testcase>,
+          # so counting elements alone would pass a run that tested nothing.
+          ran="$(php -r '
+            $xml = simplexml_load_file($argv[1]);
+            $ran = 0;
+            foreach ($xml->xpath("//testcase") as $case) {
+              if (!isset($case->skipped)) {
+                $ran++;
+              }
+            }
+            echo $ran;
+          ' junit-mcp.xml)"
+          echo "Ran ${ran} field_guard_mcp tests (floor ${MIN_MCP_TESTS})."
+          if [ "${ran}" -lt "${MIN_MCP_TESTS}" ]; then
+            echo "::error::Only ${ran} field_guard_mcp tests ran, below the floor of ${MIN_MCP_TESTS}."
+            exit 1
+          fi

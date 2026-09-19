@@ -150,8 +150,10 @@ function _field_guard_explicit_permission_verdict(
   AccountInterface $account,
   string $permission,
 ): AccessResultInterface {
+  /** @var \Drupal\field_guard\ExplicitPermissionChecker $checker */
+  $checker = \Drupal::service('field_guard.explicit_permission_checker');
   return AccessResult::forbiddenIf(
-    !_field_guard_has_explicit_permission($account, $permission),
+    !$checker->hasExplicitPermission($account, $permission),
     sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
   );
 }
@@ -159,9 +161,8 @@ function _field_guard_explicit_permission_verdict(
 /**
  * Checks whether a permission is EXPLICITLY granted by a non-admin role.
  *
- * This deliberately does not use AccountInterface::hasPermission(). That method
- * returns TRUE for every permission when the account holds a role with
- * is_admin: TRUE, or when it is uid 1.
+ * Kept for existing callers. The rule lives in
+ * \Drupal\field_guard\ExplicitPermissionChecker::hasExplicitPermission().
  *
  * @param \Drupal\Core\Session\AccountInterface $account
  *   The account to test.
@@ -172,22 +173,7 @@ function _field_guard_explicit_permission_verdict(
  *   TRUE when a non-admin role held by the account grants the permission.
  */
 function _field_guard_has_explicit_permission(AccountInterface $account, string $permission): bool {
-  $roles = \Drupal::entityTypeManager()
-    ->getStorage('user_role')
-    ->loadMultiple($account->getRoles());
-
-  foreach ($roles as $role) {
-    /** @var \Drupal\user\RoleInterface $role */
-    // Skip is_admin roles: their permission list is "everything", so consulting
-    // it would reintroduce the bypass this function exists to close.
-    if ($role->isAdmin()) {
-      continue;
-    }
-
-    if ($role->hasPermission($permission)) {
-      return TRUE;
-    }
-  }
-
-  return FALSE;
+  /** @var \Drupal\field_guard\ExplicitPermissionChecker $checker */
+  $checker = \Drupal::service('field_guard.explicit_permission_checker');
+  return $checker->hasExplicitPermission($account, $permission);
 }
