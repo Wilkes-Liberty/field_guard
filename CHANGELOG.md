@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-19
+
 ### Added
 - Optional `field_guard_mcp` submodule: two read-only Tool API plugins governed by MCP
   Sentinel. `field_guard_list_guarded` lists the guarded fields of an entity type with the
