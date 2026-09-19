@@ -7,12 +7,17 @@ Issues and merge requests are welcome in the drupal.org queue:
 
 - **Every behaviour change needs a test.** This is an access-control module; a change
   without a test that fails before it is not reviewable. Kernel tests live in
-  `tests/src/Kernel`, unit tests in `tests/src/Unit`.
+  `tests/src/Kernel`, unit tests in `tests/src/Unit`, and the optional MCP suite
+  in `modules/field_guard_mcp/tests`. Point PHPUnit at the module root so both
+  trees are discovered — not only `tests/`.
 - **Run the suite and the sniffs.**
   ```bash
-  vendor/bin/phpunit -c web/core modules/contrib/field_guard/tests
+  vendor/bin/phpunit -c web/core modules/contrib/field_guard
   vendor/bin/phpcs --standard=phpcs.xml.dist modules/contrib/field_guard
   ```
+  The MCP kernel suite skips unless Tool API (`drupal/tool`) and MCP Sentinel
+  (`drupal/mcp_sentinel`) are installed. GitHub's dedicated `mcp` job installs
+  them; Drupal.org GitLab still does not, so those tests skip there.
 - **Do not weaken the definition-level deny without discussion.** Returning anything
   other than forbidden when `$items` is empty reopens the JSON:API filter and Views
   handler paths this module exists to close. `NullItemsFailsClosedTest` guards it on

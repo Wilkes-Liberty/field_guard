@@ -11,6 +11,10 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 /**
  * Pins the shape of the protected-field map's config schema.
+ *
+ * @group field_guard
+ *
+ * @runTestsInSeparateProcesses
  */
 #[Group('field_guard')]
 #[RunTestsInSeparateProcesses]

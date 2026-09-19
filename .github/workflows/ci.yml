@@ -103,7 +103,7 @@ jobs:
         run: |
           cd drupal
           php vendor/bin/phpunit -c web/core/phpunit.xml.dist \
-            web/modules/contrib/field_guard/tests
+            web/modules/contrib/field_guard
 
   # The optional field_guard_mcp submodule (#3624447). Tool API and MCP Sentinel
   # support Drupal 10.6 and 11.3 and later, not Drupal 12, so they are installed

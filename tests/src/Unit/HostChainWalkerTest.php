@@ -11,6 +11,10 @@ use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Unit tests for the fail-closed host-chain walk.
+ *
+ * @group field_guard
+ *
+ * @runTestsInSeparateProcesses
  */
 #[Group('field_guard')]
 final class HostChainWalkerTest extends UnitTestCase {
