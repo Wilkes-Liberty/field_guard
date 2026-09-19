@@ -6,6 +6,25 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Optional `field_guard_mcp` submodule: two read-only Tool API plugins governed by MCP
+  Sentinel. `field_guard_list_guarded` lists the guarded fields of an entity type with the
+  permission each operation requires. `field_guard_check_access` reports the guard's verdict
+  on up to 50 fields for the acting account only. Names only, never field values. The base
+  module's dependencies are unchanged. The submodule requires Tool API and MCP Sentinel and
+  declares Drupal `^10.6 || ^11.3` only, because MCP Sentinel does not declare Drupal 12 yet.
+  [#3624447](https://www.drupal.org/project/field_guard/issues/3624447)
+- `field_guard.explicit_permission_checker` service
+  (`ExplicitPermissionChecker::hasExplicitPermission()`) holds the explicit-permission rule.
+  The access hook, the tools and other modules share it.
+- `ProtectedFieldMap::guardedFields()` lists the guarded fields of an entity type, names
+  only.
+
+### Changed
+- `_field_guard_has_explicit_permission()` stays and now calls the service. Run database
+  updates after deploying: a post-update rebuilds the container so the new service is
+  registered before the access hook asks for it.
+
 ## [1.2.2] - 2026-09-16
 
 ### Changed

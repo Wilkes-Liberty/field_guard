@@ -95,6 +95,51 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
   }
 
   /**
+   * Lists the guarded fields of an entity type, names only.
+   *
+   * Applies the same rules as requiredPermission(): an operation counts only
+   * when its permission is a non-empty string, and a field with no guarded
+   * operation is left out even when it carries the own-subject flag.
+   *
+   * @param string $entityTypeId
+   *   The entity type.
+   * @param string|null $bundle
+   *   Restrict the list to one bundle, or NULL for every bundle in the map.
+   *
+   * @return array<string, array<string, array{view: string|null, edit: string|null, view_exempt_own_subject: bool}>>
+   *   Per bundle and field: the permission each operation requires (NULL when
+   *   that operation is not guarded) and whether the view guard exempts the
+   *   record's own subject.
+   */
+  public function guardedFields(string $entityTypeId, ?string $bundle = NULL): array {
+    $protected = $this->settings()->get('protected') ?? [];
+    $bundles = $protected[$entityTypeId] ?? [];
+    if (!is_array($bundles)) {
+      return [];
+    }
+    if ($bundle !== NULL) {
+      $bundles = array_intersect_key($bundles, [$bundle => TRUE]);
+    }
+
+    $guarded = [];
+    foreach ($bundles as $bundleId => $fields) {
+      foreach (is_array($fields) ? array_keys($fields) : [] as $fieldName) {
+        $bundleId = (string) $bundleId;
+        $fieldName = (string) $fieldName;
+        if (!$this->isProtected($entityTypeId, $bundleId, $fieldName)) {
+          continue;
+        }
+        $guarded[$bundleId][$fieldName] = [
+          'view' => $this->requiredPermission($entityTypeId, $bundleId, $fieldName, 'view'),
+          'edit' => $this->requiredPermission($entityTypeId, $bundleId, $fieldName, 'edit'),
+          'view_exempt_own_subject' => $this->viewExemptsOwnSubject($entityTypeId, $bundleId, $fieldName),
+        ];
+      }
+    }
+    return $guarded;
+  }
+
+  /**
    * Loads the settings config object.
    */
   private function settings() {

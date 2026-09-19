@@ -137,6 +137,61 @@ workflow field forbids legitimate transitions after computing its answer against
 wrong state. Enforce publish/transition policy with a validation constraint, which sees
 the incoming value; guard `view` here freely.
 
+## Optional MCP tools
+
+An API client cannot otherwise tell which fields this module guards. A write to a guarded
+field fails with a 403 only after the request is sent. A read is worse: JSON:API leaves a
+view-denied field out of the resource and GraphQL returns `null`, so a guarded field looks
+like an empty one.
+
+`field_guard_mcp` exposes two read-only [Tool API](https://www.drupal.org/project/tool)
+plugins that answer the question. It depends on Tool API and
+[MCP Sentinel](https://www.drupal.org/project/mcp_sentinel). The base module depends on
+neither. The submodule declares Drupal `^10.6 || ^11.3` only: MCP Sentinel does not declare
+Drupal 12 yet. The base module keeps its own range.
+
+| Tool | OAuth scope | Inputs | Returns |
+| --- | --- | --- | --- |
+| `field_guard_list_guarded` | `mcp_read` | `entity_type`, optional `bundle` | Per guarded field: the guarded operations, the permission name each requires, and whether the view guard exempts the record's own subject. At most 500 fields, with a `truncated` flag |
+| `field_guard_check_access` | `mcp_read` | `entity_type`, `bundle`, `fields` (1 to 50), `operation` (`view` or `edit`) | Per field, for the acting account: `guarded`, `allowed`, the required permission name, `own_subject_exempt` |
+
+What `field_guard_check_access` means:
+
+- It answers for the account making the call. There is no input that names another account.
+- It reports this module's verdict, not Drupal's full field access result. `allowed: true`
+  means Field Guard does not deny the account. Entity access, other modules and field
+  permissions still apply.
+- A field this module does not guard returns `guarded: false` and `allowed: null`, never
+  `allowed: true`.
+- It calls the same service method the access hook calls
+  (`ExplicitPermissionChecker::hasExplicitPermission()`), so uid 1 and an `is_admin` role
+  are reported as denied unless a non-admin role explicitly holds the permission.
+- `own_subject_exempt: true` means the record's own subject may view the field without the
+  permission. The tool does not resolve who the subject of any record is.
+- Filtering or sorting on a guarded field is refused for every account. The tool does not
+  change that.
+
+Setup and limits:
+
+- Grant `use field guard mcp tools` to the role your MCP credential uses. It is a restricted
+  permission. The map names which permissions unlock which fields, so treat it as such.
+- MCP Sentinel's gates apply first: permission, source readiness, scope, IP policy and rate
+  limit. A tool is listed only for an account that can run it.
+- Results hold entity type, bundle, field and permission names. No tool loads an entity or
+  returns a field value.
+- A refusal from this module is one fixed message. Tool API and MCP Sentinel have their own
+  messages for invalid input, denied access and rate limits. None relays an input value.
+- Installing the submodule publishes nothing by itself. Enable the tools in your site's MCP
+  tool bridge configuration.
+
+Not available as tools, by design:
+
+- Any write to the protected map or to role permissions. A reviewed config change is what
+  this module's separation of duties rests on.
+- Reading a guarded value. That would be the guard's bypass.
+- Checking access for another user. That is a grant oracle.
+- Own-subject resolution for an arbitrary entity. That is an ownership oracle.
+
 ## Relationship to Field Permissions
 
 [`field_permissions`](https://www.drupal.org/project/field_permissions) solves an overlapping

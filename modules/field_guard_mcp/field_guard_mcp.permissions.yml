@@ -1,0 +1,4 @@
+'use field guard mcp tools':
+  title: 'Use Field Guard MCP read tools'
+  description: 'List which fields Field Guard protects and check the guard verdict for the acting account through governed MCP tools. Returns field and permission names, never field values.'
+  restrict access: true

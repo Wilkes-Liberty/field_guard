@@ -5,3 +5,7 @@ services:
 
   field_guard.host_chain_walker:
     class: Drupal\field_guard\HostChainWalker
+
+  field_guard.explicit_permission_checker:
+    class: Drupal\field_guard\ExplicitPermissionChecker
+    arguments: ['@entity_type.manager']

@@ -32,6 +32,51 @@ final class ProtectedFieldMapTest extends UnitTestCase {
   }
 
   /**
+   * Enumeration applies the lookup rules and never invents a guard.
+   */
+  public function testGuardedFieldsEnumeratesTheMap(): void {
+    $map = $this->mapWith([
+      'profile' => [
+        'compliance_record' => [
+          'field_evidence_date' => ['view' => 'view guarded field', 'edit' => 'edit guarded field'],
+          'field_subject_note' => ['view' => 'view guarded field', 'view_exempt_own_subject' => TRUE],
+          'field_blank' => ['view' => '', 'edit' => ''],
+          'field_flag_only' => ['view_exempt_own_subject' => TRUE],
+        ],
+        'engagement' => ['field_rate' => ['edit' => 'edit guarded field']],
+        'empty_bundle' => [],
+      ],
+      'node' => ['page' => ['field_other' => ['view' => 'view guarded field']]],
+    ]);
+
+    $this->assertSame([
+      'compliance_record' => [
+        'field_evidence_date' => [
+          'view' => 'view guarded field',
+          'edit' => 'edit guarded field',
+          'view_exempt_own_subject' => FALSE,
+        ],
+        'field_subject_note' => [
+          'view' => 'view guarded field',
+          'edit' => NULL,
+          'view_exempt_own_subject' => TRUE,
+        ],
+      ],
+      'engagement' => [
+        'field_rate' => [
+          'view' => NULL,
+          'edit' => 'edit guarded field',
+          'view_exempt_own_subject' => FALSE,
+        ],
+      ],
+    ], $map->guardedFields('profile'));
+
+    $this->assertSame(['engagement'], array_keys($map->guardedFields('profile', 'engagement')));
+    $this->assertSame([], $map->guardedFields('profile', 'missing'));
+    $this->assertSame([], $map->guardedFields('media'));
+  }
+
+  /**
    * The happy path: an exact match returns the configured permission.
    */
   public function testExactMatchReturnsPermission(): void {
