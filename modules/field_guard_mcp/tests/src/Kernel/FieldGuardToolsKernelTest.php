@@ -336,6 +336,72 @@ final class FieldGuardToolsKernelTest extends KernelTestBase {
   }
 
   /**
+   * The tools re-validate in code, behind Tool API's own constraints.
+   *
+   * Tool API rejects these values before doExecute() runs, so the only way to
+   * reach the second check is to call doExecute() the way a PHP caller could.
+   */
+  public function testCodeRevalidatesBehindToolApiConstraints(): void {
+    $good = [
+      'entity_type' => 'entity_test',
+      'bundle' => 'entity_test',
+      'fields' => ['field_open'],
+      'operation' => 'view',
+    ];
+    $cases = [
+      'field_guard_check_access' => [
+        ['entity_type' => 'Entity-Test-7Q'] + $good,
+        ['bundle' => 'bundle 7Q'] + $good,
+        ['fields' => ['field_open', 'field.bad-7Q']] + $good,
+        ['fields' => 'field_open'] + $good,
+        ['fields' => []] + $good,
+        ['fields' => array_map(static fn (int $i): string => 'field_' . $i, range(1, 51))] + $good,
+        ['operation' => 'delete-7Q'] + $good,
+      ],
+      'field_guard_list_guarded' => [
+        ['entity_type' => 'Bad Type 7Q'],
+        ['entity_type' => 'entity_test', 'bundle' => 'Bad Bundle 7Q'],
+        [],
+      ],
+    ];
+    foreach ($cases as $id => $inputs) {
+      $tool = $this->tool($id);
+      $method = new \ReflectionMethod($tool, 'doExecute');
+      foreach ($inputs as $values) {
+        $result = $method->invoke($tool, $values);
+        self::assertFalse($result->isSuccess(), $id . ' ' . json_encode($values));
+        self::assertSame(
+          'Field Guard operation refused. Check permissions, inputs and limits.',
+          (string) $result->getMessage(),
+        );
+        self::assertEmpty($result->getContextValues());
+      }
+      // The same call path succeeds with good values, so the refusals above
+      // come from validation and not from the way the method is reached.
+      $ok = $method->invoke($tool, $id === 'field_guard_list_guarded' ? ['entity_type' => 'entity_test'] : $good);
+      self::assertTrue($ok->isSuccess(), $id);
+    }
+  }
+
+  /**
+   * The list stops at 500 fields and says so.
+   */
+  public function testListIsBoundedAndSaysWhenTruncated(): void {
+    $fields = [];
+    foreach (range(1, 501) as $i) {
+      $fields['field_bulk_' . $i] = ['view' => 'view guarded field'];
+    }
+    $this->config('field_guard.settings')
+      ->set('protected', ['entity_test' => ['bulk' => $fields]])
+      ->save();
+
+    $list = $this->execute('field_guard_list_guarded', ['entity_type' => 'entity_test']);
+    self::assertSame(501, $list['total']);
+    self::assertTrue($list['truncated']);
+    self::assertCount(500, $list['fields']);
+  }
+
+  /**
    * Creates a fresh tool instance with inputs set.
    */
   private function tool(string $id, array $inputs = []): object {
