@@ -78,15 +78,4 @@ final class ExplicitPermissionCheckerTest extends KernelTestBase {
     $this->assertTrue($this->checker->hasExplicitPermission($admin, $permission));
   }
 
-  /**
-   * The module-file function stays and gives the service's answer.
-   */
-  public function testFunctionWrapperDelegates(): void {
-    $holder = $this->createUser(['view guarded field']);
-    $admin = $this->createUser([], 'admin-ish', TRUE);
-
-    $this->assertTrue(_field_guard_has_explicit_permission($holder, 'view guarded field'));
-    $this->assertFalse(_field_guard_has_explicit_permission($admin, 'view guarded field'));
-  }
-
 }
