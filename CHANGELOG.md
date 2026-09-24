@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Removed
+- `_field_guard_has_explicit_permission()` wrapper. Call
+  `ExplicitPermissionChecker::hasExplicitPermission()` (service
+  `field_guard.explicit_permission_checker`) directly. The access hook already
+  did.
+
 ## [1.3.1] - 2026-09-19
 
 ### Changed

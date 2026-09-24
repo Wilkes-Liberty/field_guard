@@ -27,7 +27,7 @@ Issues and merge requests are welcome in the drupal.org queue:
 - **Do not resolve access through `AccountInterface::hasPermission()`.** It returns
   TRUE for every permission on an `is_admin` role and for user 1, which silently
   exempts the accounts most worth constraining. See
-  `_field_guard_has_explicit_permission()` and the tests around it.
+  `ExplicitPermissionChecker::hasExplicitPermission()` and the tests around it.
 
 ## Supported Drupal versions
 

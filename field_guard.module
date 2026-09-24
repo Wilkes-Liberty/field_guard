@@ -157,23 +157,3 @@ function _field_guard_explicit_permission_verdict(
     sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
   );
 }
-
-/**
- * Checks whether a permission is EXPLICITLY granted by a non-admin role.
- *
- * Kept for existing callers. The rule lives in
- * \Drupal\field_guard\ExplicitPermissionChecker::hasExplicitPermission().
- *
- * @param \Drupal\Core\Session\AccountInterface $account
- *   The account to test.
- * @param string $permission
- *   The permission that must be explicitly granted.
- *
- * @return bool
- *   TRUE when a non-admin role held by the account grants the permission.
- */
-function _field_guard_has_explicit_permission(AccountInterface $account, string $permission): bool {
-  /** @var \Drupal\field_guard\ExplicitPermissionChecker $checker */
-  $checker = \Drupal::service('field_guard.explicit_permission_checker');
-  return $checker->hasExplicitPermission($account, $permission);
-}
