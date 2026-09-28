@@ -29,11 +29,7 @@ parameters:
     # class.
     #
     # This is a static-analysis artifact, not a defect: PHP attributes are inert
-    # unless something reflects on them, so PHPUnit 9 ignores them and the suite
-    # passes 45/45 on 10.6. The alternative — dropping to @group/@covers
-    # annotations — buys a clean previous-major report today at the cost of a
-    # rewrite when PHPUnit 12 removes annotation support, which would break the
-    # ^12 half of the version constraint.
+    # unless something reflects on them, so PHPUnit 9 ignores them.
     #
     # Reassess when the supported floor rises above Drupal 10.
     - "#Attribute class PHPUnit.*Attributes.* does not exist#"

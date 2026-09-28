@@ -97,8 +97,6 @@ final class CheckAccessTool extends FieldGuardToolBase {
     $fields = [];
     foreach ($names as $name) {
       $permission = $this->fieldMap->requiredPermission($entityType, $bundle, $name, $operation);
-      // The acting account only. There is no input that names another one.
-      // An unguarded field has no verdict: NULL, never TRUE.
       $allowed = $permission === NULL
         ? NULL
         : $this->checker->hasExplicitPermission($this->currentUser, $permission);
