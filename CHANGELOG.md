@@ -6,6 +6,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-09-28
+
+### Changed
+- Shorten the PHPStan baseline note about PHPUnit attributes. Two comments
+  that restated the acting-account rule are removed from the check-access
+  tool. Behavior is unchanged.
+
 ## [1.3.2] - 2026-09-24
 
 ### Removed
