@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.4] - 2026-09-29
+
+### Changed
+- Trim leftover PHPUnit 9 data-provider essay wording from unit and kernel
+  tests. Behavior is unchanged.
+
 ## [1.3.3] - 2026-09-28
 
 ### Changed
