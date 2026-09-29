@@ -17,9 +17,6 @@ use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 /**
  * Exercises discovery and direct execution against source governance.
  *
- * The annotations repeat the attributes because the Drupal 10.6 leg runs
- * PHPUnit 9, which reads only annotations.
- *
  * @group field_guard
  *
  * @runTestsInSeparateProcesses
