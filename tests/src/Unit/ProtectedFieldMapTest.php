@@ -97,17 +97,7 @@ final class ProtectedFieldMapTest extends UnitTestCase {
   /**
    * A miss on any axis is unprotected — protection is never inherited.
    *
-   * Deliberately a loop rather than a data provider. This module supports
-   * Drupal 10.6, which ships PHPUnit 9; that version honours only the docblock
-   * annotation form and ignores the attribute, so an attribute-driven provider
-   * passes zero arguments and the test dies with ArgumentCountError. Carrying
-   * both forms works but invites a double-provide once the annotation form is
-   * removed. A loop behaves identically on every PHPUnit version, and the
-   * per-case message keeps a failure just as readable.
-   *
-   * Note the annotation name is spelled out nowhere in this docblock on
-   * purpose: PHPUnit scans comments for it and would treat a mention as a real
-   * declaration, failing with "Method ::() does not exist".
+   * A loop rather than a data provider: PHPUnit 9 ignores the attribute form.
    */
   public function testMissesAreUnprotected(): void {
     $map = $this->mapWith([
