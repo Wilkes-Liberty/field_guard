@@ -6,6 +6,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.5] - 2026-09-30
+
+### Changed
+- ProtectedFieldMap reads each field map entry once. An empty-string
+  permission is still treated as unset. The public permission checks are
+  unchanged.
+
 ## [1.3.4] - 2026-09-29
 
 ### Changed
