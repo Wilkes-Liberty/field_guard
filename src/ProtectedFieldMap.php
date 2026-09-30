@@ -56,9 +56,8 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
       return NULL;
     }
 
-    $protected = $this->settings()->get('protected') ?? [];
-
-    $permission = $protected[$entityTypeId][$bundle][$fieldName][$operation] ?? NULL;
+    $entry = $this->mapEntry($entityTypeId, $bundle, $fieldName);
+    $permission = $entry[$operation] ?? NULL;
 
     // An empty string is a misconfiguration, not a grant. Treat it as unset
     // rather than as "a permission nobody holds", which would be an accidental
@@ -74,9 +73,8 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
       return FALSE;
     }
 
-    $protected = $this->settings()->get('protected') ?? [];
-
-    return ($protected[$entityTypeId][$bundle][$fieldName]['view_exempt_own_subject'] ?? NULL) === TRUE;
+    $entry = $this->mapEntry($entityTypeId, $bundle, $fieldName);
+    return ($entry['view_exempt_own_subject'] ?? NULL) === TRUE;
   }
 
   /**
@@ -86,8 +84,10 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
    * for example an audit subscriber deciding whether a read is worth recording.
    */
   public function isProtected(string $entityTypeId, ?string $bundle, string $fieldName): bool {
+    $entry = $this->mapEntry($entityTypeId, $bundle, $fieldName);
     foreach (self::OPERATIONS as $operation) {
-      if ($this->requiredPermission($entityTypeId, $bundle, $fieldName, $operation) !== NULL) {
+      $permission = $entry[$operation] ?? NULL;
+      if (is_string($permission) && $permission !== '') {
         return TRUE;
       }
     }
@@ -126,17 +126,39 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
       foreach (is_array($fields) ? array_keys($fields) : [] as $fieldName) {
         $bundleId = (string) $bundleId;
         $fieldName = (string) $fieldName;
-        if (!$this->isProtected($entityTypeId, $bundleId, $fieldName)) {
+        $entry = $this->mapEntry($entityTypeId, $bundleId, $fieldName);
+        $view = $entry['view'] ?? NULL;
+        $edit = $entry['edit'] ?? NULL;
+        $view = is_string($view) && $view !== '' ? $view : NULL;
+        $edit = is_string($edit) && $edit !== '' ? $edit : NULL;
+        if ($view === NULL && $edit === NULL) {
           continue;
         }
         $guarded[$bundleId][$fieldName] = [
-          'view' => $this->requiredPermission($entityTypeId, $bundleId, $fieldName, 'view'),
-          'edit' => $this->requiredPermission($entityTypeId, $bundleId, $fieldName, 'edit'),
-          'view_exempt_own_subject' => $this->viewExemptsOwnSubject($entityTypeId, $bundleId, $fieldName),
+          'view' => $view,
+          'edit' => $edit,
+          'view_exempt_own_subject' => ($entry['view_exempt_own_subject'] ?? NULL) === TRUE,
         ];
       }
     }
     return $guarded;
+  }
+
+  /**
+   * Returns the field-level map entry, or an empty array when there is none.
+   */
+  private function mapEntry(
+    string $entityTypeId,
+    ?string $bundle,
+    string $fieldName,
+  ): array {
+    if ($bundle === NULL) {
+      return [];
+    }
+
+    $protected = $this->settings()->get('protected') ?? [];
+    $entry = $protected[$entityTypeId][$bundle][$fieldName] ?? [];
+    return is_array($entry) ? $entry : [];
   }
 
   /**
