@@ -23,6 +23,9 @@ variables:
   #
   # PREVIOUS_MAJOR = newest 10.x satisfying the constraint (10.6, the D10 floor).
   # PREVIOUS_MINOR = prior minor of the current major (11.3, the D11 floor).
+  # composer.json requires php >=8.1, which is CORE_PREVIOUS_PHP_MIN. The
+  # previous-major composer job already resolves on that pair (pipeline 982779).
+  # Do not skip the lane or raise the PHP/core floor: there is no mismatch.
   OPT_IN_TEST_PREVIOUS_MAJOR: '1'
   OPT_IN_TEST_PREVIOUS_MINOR: '1'
   _AUTORUN_PREVIOUS_MAJOR: 'all'

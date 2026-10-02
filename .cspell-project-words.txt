@@ -1,6 +1,12 @@
+# Project-specific words allowed by the Drupal.org cspell job.
+# One word per line; blank lines and lines starting with # are ignored.
+# https://project.pages.drupalcode.org/gitlab_templates/jobs/cspell/
 behaviour
 Cerda
 diffable
+exfiltration
 mcp
+parentless
 unconfigured
 unfilterable
+unrecognised
