@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.6] - 2026-10-02
+
 ### Changed
 - Drupal.org cspell: add `exfiltration`, `parentless`, and `unrecognised` to
   the project dictionary from the latest failed job. Previous-major stays on;
