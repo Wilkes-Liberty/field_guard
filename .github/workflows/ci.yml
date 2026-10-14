@@ -28,7 +28,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          tools: composer:v2, cs2pr
+          tools: composer:v2
           coverage: none
 
       - name: Install Coder
@@ -67,18 +67,7 @@ jobs:
 
       - name: Build a Drupal codebase
         run: |
-          retry() {
-            rc=0
-            for n in 1 2 3; do
-              "$@" && return 0
-              rc=$?
-              if [ "$n" -lt 3 ]; then
-                echo "::warning::attempt $n of 3 failed (exit $rc): $* - retrying"
-                sleep "$((15 * n))"
-              fi
-            done
-            return "$rc"
-          }
+          . "${GITHUB_WORKSPACE}/field_guard_src/.github/scripts/retry.sh"
           scaffold() {
             rm -rf drupal
             composer create-project drupal/recommended-project:${{ matrix.drupal }} drupal \
@@ -93,13 +82,11 @@ jobs:
           retry composer require \
             drupal/core-dev:${{ matrix.drupal }} \
             'drupal/field_guard:*@dev' \
-            'firebase/php-jwt:^6.10 || ^7.0' \
             --no-interaction --with-all-dependencies
 
       - name: Run the Field Guard suite
         env:
           SIMPLETEST_DB: 'sqlite://localhost/:memory:'
-          SYMFONY_DEPRECATIONS_HELPER: disabled
         run: |
           cd drupal
           php vendor/bin/phpunit -c web/core/phpunit.xml.dist \
@@ -139,18 +126,7 @@ jobs:
           DRUPAL_CONSTRAINT: ${{ matrix.constraint }}
           EXPECTED_DRUPAL: ${{ matrix.drupal }}
         run: |
-          retry() {
-            rc=0
-            for n in 1 2 3; do
-              "$@" && return 0
-              rc=$?
-              if [ "$n" -lt 3 ]; then
-                echo "::warning::attempt $n of 3 failed (exit $rc): $* - retrying"
-                sleep "$((15 * n))"
-              fi
-            done
-            return "$rc"
-          }
+          . "${GITHUB_WORKSPACE}/field_guard_src/.github/scripts/retry.sh"
           scaffold() {
             rm -rf drupal
             composer create-project "drupal/recommended-project:${DRUPAL_CONSTRAINT}" drupal \
@@ -180,10 +156,16 @@ jobs:
             *) echo "::error::Leg claims Drupal ${EXPECTED_DRUPAL} but resolved ${core}."; exit 1 ;;
           esac
 
+      # The 11.4 MCP leg leaves SYMFONY_DEPRECATIONS_HELPER unset so Drupal's
+      # phpunit.xml.dist applies. Older legs still disable: PHPUnit 9 / older
+      # core noise is not this cleanup's subject.
+      - name: Disable Symfony deprecations on older MCP legs
+        if: matrix.constraint != '^11.4'
+        run: echo "SYMFONY_DEPRECATIONS_HELPER=disabled" >> "$GITHUB_ENV"
+
       - name: Run the Field Guard MCP suite
         env:
           SIMPLETEST_DB: 'sqlite://localhost/:memory:'
-          SYMFONY_DEPRECATIONS_HELPER: disabled
           MIN_MCP_TESTS: '10'
         run: |
           set -euo pipefail

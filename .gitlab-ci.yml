@@ -16,6 +16,9 @@ include:
 variables:
   _GITLAB_TEMPLATES_REPO: project/gitlab_templates
   _GITLAB_TEMPLATES_REF: main
+  # Curl assets must track the same ref as the include. Without this, scripts
+  # still come from default-ref while the YAML comes from main.
+  _CURL_TEMPLATES_REF: main
   # This module declares `^10.6 || ^11.3 || ^12`. A support claim CI does not
   # exercise is not a claim, so each branch of that constraint gets a job.
   # OPT_IN_* surfaces the job; _AUTORUN_* ('all') makes it run automatically
@@ -23,8 +26,7 @@ variables:
   #
   # PREVIOUS_MAJOR = newest 10.x satisfying the constraint (10.6, the D10 floor).
   # PREVIOUS_MINOR = prior minor of the current major (11.3, the D11 floor).
-  # composer.json requires php >=8.1, which is CORE_PREVIOUS_PHP_MIN. The
-  # previous-major composer job already resolves on that pair (pipeline 982779).
+  # composer.json requires php >=8.1, which is CORE_PREVIOUS_PHP_MIN.
   # Do not skip the lane or raise the PHP/core floor: there is no mismatch.
   OPT_IN_TEST_PREVIOUS_MAJOR: '1'
   OPT_IN_TEST_PREVIOUS_MINOR: '1'
