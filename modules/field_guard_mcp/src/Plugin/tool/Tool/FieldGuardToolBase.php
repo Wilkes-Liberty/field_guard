@@ -11,6 +11,7 @@ use Drupal\field_guard\ProtectedFieldMap;
 use Drupal\mcp_sentinel\McpPolicyProfileInterface;
 use Drupal\mcp_sentinel\Plugin\tool\Tool\McpEntityToolTrait;
 use Drupal\mcp_sentinel\Plugin\tool\Tool\McpGovernedToolBase;
+use Drupal\mcp_sentinel\Service\McpExfiltrationGuard;
 use Drupal\tool\ExecutableResult;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -47,11 +48,9 @@ abstract class FieldGuardToolBase extends McpGovernedToolBase {
   protected ProtectedFieldMap $fieldMap;
 
   /**
-   * MCP Sentinel's exfiltration guard, when the installed version has one.
-   *
-   * @var \Drupal\mcp_sentinel\Service\McpExfiltrationGuard|null
+   * MCP Sentinel's exfiltration guard.
    */
-  protected $exfiltrationGuard = NULL;
+  protected McpExfiltrationGuard $exfiltrationGuard;
 
   /**
    * {@inheritdoc}
@@ -59,9 +58,7 @@ abstract class FieldGuardToolBase extends McpGovernedToolBase {
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->fieldMap = $container->get('field_guard.field_map');
-    $instance->exfiltrationGuard = $container->has('mcp_sentinel.exfiltration_guard')
-      ? $container->get('mcp_sentinel.exfiltration_guard')
-      : NULL;
+    $instance->exfiltrationGuard = $container->get('mcp_sentinel.exfiltration_guard');
     return $instance;
   }
 
@@ -131,9 +128,7 @@ abstract class FieldGuardToolBase extends McpGovernedToolBase {
    * The smaller of this module's ceiling and the profile's response-size cap.
    */
   protected function resultLimit(McpPolicyProfileInterface $profile): int {
-    $cap = $this->exfiltrationGuard !== NULL
-      ? (int) $this->exfiltrationGuard->effectiveResponseSizeCap($profile)
-      : 0;
+    $cap = $this->exfiltrationGuard->effectiveResponseSizeCap($profile);
     return $cap > 0 ? min(static::MAX_RESULT_BYTES, $cap) : static::MAX_RESULT_BYTES;
   }
 

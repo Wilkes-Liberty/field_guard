@@ -96,8 +96,6 @@ final class ProtectedFieldMapTest extends UnitTestCase {
 
   /**
    * A miss on any axis is unprotected — protection is never inherited.
-   *
-   * A loop rather than a data provider: PHPUnit 9 ignores the attribute form.
    */
   public function testMissesAreUnprotected(): void {
     $map = $this->mapWith([
