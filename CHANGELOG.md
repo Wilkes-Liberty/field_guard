@@ -6,6 +6,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.7] - 2026-10-15
+
+### Fixed
+- Field Guard MCP tools require `mcp_sentinel.exfiltration_guard` and apply
+  its response-size cap. The submodule already requires MCP Sentinel 2.22.0
+  or later, which provides that service, so the tools no longer treat the
+  guard as optional.
+
+### Changed
+- GitHub and GitLab CI drop unused installs and align template refs.
+  Base-module runtime behavior is unchanged.
+
 ## [1.3.6] - 2026-10-02
 
 ### Changed
