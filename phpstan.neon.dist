@@ -21,15 +21,5 @@ parameters:
   ignoreErrors:
     - identifier: missingType.iterableValue
     - identifier: missingType.generics
-    # The test suite uses PHPUnit attributes (#[Group], #[CoversClass],
-    # #[CoversFunction], #[RunTestsInSeparateProcesses]). This module supports
-    # Drupal 10.6, which ships PHPUnit 9 — a version with no
-    # PHPUnit\Framework\Attributes namespace at all. So when the previous-major
-    # job analyses against that stack, every attribute resolves to a missing
-    # class.
-    #
-    # This is a static-analysis artifact, not a defect: PHP attributes are inert
-    # unless something reflects on them, so PHPUnit 9 ignores them.
-    #
-    # Reassess when the supported floor rises above Drupal 10.
+    # Previous-major phpstan runs on PHPUnit 9, which has no Attributes namespace.
     - "#Attribute class PHPUnit.*Attributes.* does not exist#"

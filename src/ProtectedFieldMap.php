@@ -57,11 +57,23 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
     }
 
     $entry = $this->mapEntry($entityTypeId, $bundle, $fieldName);
-    $permission = $entry[$operation] ?? NULL;
+    return self::permissionOrNull($entry[$operation] ?? NULL);
+  }
 
-    // An empty string is a misconfiguration, not a grant. Treat it as unset
-    // rather than as "a permission nobody holds", which would be an accidental
-    // total denial that is very hard to diagnose from the config alone.
+  /**
+   * Returns a non-empty permission string, or NULL.
+   *
+   * An empty string is a misconfiguration, not a grant. Treat it as unset
+   * rather than as "a permission nobody holds", which would be an accidental
+   * total denial that is very hard to diagnose from the config alone.
+   *
+   * @param mixed $permission
+   *   A configured permission value, or anything else the map stored.
+   *
+   * @return string|null
+   *   The permission, or NULL when the value is not a non-empty string.
+   */
+  public static function permissionOrNull(mixed $permission): ?string {
     return is_string($permission) && $permission !== '' ? $permission : NULL;
   }
 
@@ -86,8 +98,7 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
   public function isProtected(string $entityTypeId, ?string $bundle, string $fieldName): bool {
     $entry = $this->mapEntry($entityTypeId, $bundle, $fieldName);
     foreach (self::OPERATIONS as $operation) {
-      $permission = $entry[$operation] ?? NULL;
-      if (is_string($permission) && $permission !== '') {
+      if (self::permissionOrNull($entry[$operation] ?? NULL) !== NULL) {
         return TRUE;
       }
     }
@@ -127,10 +138,8 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
         $bundleId = (string) $bundleId;
         $fieldName = (string) $fieldName;
         $entry = $this->mapEntry($entityTypeId, $bundleId, $fieldName);
-        $view = $entry['view'] ?? NULL;
-        $edit = $entry['edit'] ?? NULL;
-        $view = is_string($view) && $view !== '' ? $view : NULL;
-        $edit = is_string($edit) && $edit !== '' ? $edit : NULL;
+        $view = self::permissionOrNull($entry['view'] ?? NULL);
+        $edit = self::permissionOrNull($entry['edit'] ?? NULL);
         if ($view === NULL && $edit === NULL) {
           continue;
         }
