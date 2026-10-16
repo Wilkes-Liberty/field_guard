@@ -7,6 +7,7 @@ namespace Drupal\field_guard;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheableDependencyInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\ImmutableConfig;
 
 /**
  * Resolves which permission, if any, guards a given field operation.
@@ -173,7 +174,7 @@ final class ProtectedFieldMap implements CacheableDependencyInterface {
   /**
    * Loads the settings config object.
    */
-  private function settings() {
+  private function settings(): ImmutableConfig {
     return $this->configFactory->get(self::SETTINGS);
   }
 
