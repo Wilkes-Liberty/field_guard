@@ -9,3 +9,10 @@ services:
   field_guard.explicit_permission_checker:
     class: Drupal\field_guard\ExplicitPermissionChecker
     arguments: ['@entity_type.manager']
+
+  field_guard.access:
+    class: Drupal\field_guard\FieldAccess
+    arguments:
+      - '@field_guard.field_map'
+      - '@field_guard.host_chain_walker'
+      - '@field_guard.explicit_permission_checker'

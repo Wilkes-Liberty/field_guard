@@ -14,3 +14,11 @@ function field_guard_post_update_register_explicit_permission_checker(): void {
   // Deliberately empty. Running any update rebuilds the container, and the
   // access hook needs field_guard.explicit_permission_checker to be in it.
 }
+
+/**
+ * Rebuild the container to register the field-access service.
+ */
+function field_guard_post_update_register_access_service(): void {
+  // Deliberately empty. Running any update rebuilds the container, and the
+  // access hook needs field_guard.access to be in it.
+}

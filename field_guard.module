@@ -9,12 +9,10 @@
 
 declare(strict_types=1);
 
-use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\user\UserInterface;
 
 /**
  * Implements hook_entity_field_access().
@@ -25,135 +23,12 @@ function field_guard_entity_field_access(
   AccountInterface $account,
   ?FieldItemListInterface $items = NULL,
 ): AccessResultInterface {
-  /** @var \Drupal\field_guard\ProtectedFieldMap $map */
-  $map = \Drupal::service('field_guard.field_map');
-
-  $permission = $map->requiredPermission(
-    $field_definition->getTargetEntityTypeId(),
-    $field_definition->getTargetBundle(),
-    $field_definition->getName(),
+  /** @var \Drupal\field_guard\FieldAccess $access */
+  $access = \Drupal::service('field_guard.access');
+  return $access->entityFieldAccess(
     $operation,
-  );
-
-  // Not a field we were told to protect. Stay silent: neutral folds away under
-  // orIf and cannot widen access another module intended to restrict. This
-  // module only ever denies — it never grants. Still take the map's cache
-  // tags: an untagged neutral can outlive the config change that protects
-  // the field.
-  if ($permission === NULL) {
-    return AccessResult::neutral()->addCacheableDependency($map);
-  }
-
-  // Fail closed on a definition-level check.
-  if ($items === NULL) {
-    // Same for every account — it does not consult $account — so it carries
-    // no user cache context. It depends on the map, so it takes the map's
-    // cache tags and nothing else.
-    return AccessResult::forbidden(
-      'Guarded fields cannot be filtered or sorted on; access requires an entity context.'
-    )->addCacheableDependency($map);
-  }
-
-  // Own-subject view exemption: opt-in per field, view only. There is no
-  // edit counterpart, and the definition-level deny above still applies.
-  if ($operation === 'view'
-    && $map->viewExemptsOwnSubject(
-      $field_definition->getTargetEntityTypeId(),
-      $field_definition->getTargetBundle(),
-      $field_definition->getName(),
-    )
-  ) {
-    /** @var \Drupal\field_guard\HostChainWalker $walker */
-    $walker = \Drupal::service('field_guard.host_chain_walker');
-    $chain = $walker->chain($items->getEntity());
-
-    if (_field_guard_chain_is_own_subject($chain, $account)) {
-      // Depends on identity (which uid is asking) and on the chain, nothing
-      // else — the subject needs no permission.
-      $verdict = AccessResult::neutral()->addCacheContexts(['user']);
-    }
-    else {
-      // A non-subject on a flagged field is exactly the ordinary
-      // permission-based verdict, plus the ownership question. It therefore
-      // needs BOTH the identity context ('user' — two accounts with identical
-      // roles get different answers when one is the subject) AND the
-      // role/permission contexts: 'user' alone keys the cache per uid but
-      // carries nothing that changes when a role's permission list changes,
-      // so a cached verdict would outlive a grant or a revocation.
-      $verdict = _field_guard_explicit_permission_verdict($account, $permission)
-        ->addCacheContexts(['user', 'user.roles', 'user.permissions']);
-    }
-
-    // Both arms depend on the map and on the host chain: re-parenting any
-    // link flips ownership, and each chain entity's tags invalidate the
-    // cached verdict when that happens. A NULL chain (cycle, depth cap)
-    // fails closed above — cover at least the host entity itself.
-    $verdict->addCacheableDependency($map);
-    foreach ($chain ?? [$items->getEntity()] as $link) {
-      $verdict->addCacheableDependency($link);
-    }
-    return $verdict;
-  }
-
-  // The value-level verdict DOES depend on the account (which roles the
-  // account holds and those roles' permission lists), so the user contexts
-  // stay. The map dependency is added because whether this field is guarded
-  // at all comes from config — without it a settings change leaves the
-  // previous verdict cached.
-  return _field_guard_explicit_permission_verdict($account, $permission)
-    ->addCacheContexts(['user.roles', 'user.permissions'])
-    ->addCacheableDependency($map);
-}
-
-/**
- * Decides whether a resolved host chain roots at the acting user's account.
- *
- * The root must be a User entity that IS the acting account. Anonymous never
- * owns a record. A NULL chain means the walk could not establish a root
- * (cycle, depth cap, or a broken parent accessor) — that is a refusal, not an
- * unknown: an exemption must rest on a proven subject.
- *
- * @param \Drupal\Core\Entity\EntityInterface[]|null $chain
- *   The host chain from HostChainWalker::chain(), root last, or NULL.
- * @param \Drupal\Core\Session\AccountInterface $account
- *   The acting account.
- *
- * @return bool
- *   TRUE when the chain's root is the acting user's own account.
- */
-function _field_guard_chain_is_own_subject(?array $chain, AccountInterface $account): bool {
-  if ($chain === NULL || !$account->isAuthenticated()) {
-    return FALSE;
-  }
-
-  $root = end($chain);
-
-  return $root instanceof UserInterface
-    && (int) $root->id() === (int) $account->id();
-}
-
-/**
- * Builds the explicit-permission access verdict for a guarded field.
- *
- * Cache contexts stay with the caller: the default path needs role/permission;
- * the non-subject arm of own-subject also needs 'user'.
- *
- * @param \Drupal\Core\Session\AccountInterface $account
- *   The account to test.
- * @param string $permission
- *   The permission that must be explicitly granted.
- *
- * @return \Drupal\Core\Access\AccessResultInterface
- *   Forbidden when the permission is not explicitly granted.
- */
-function _field_guard_explicit_permission_verdict(
-  AccountInterface $account,
-  string $permission,
-): AccessResultInterface {
-  /** @var \Drupal\field_guard\ExplicitPermissionChecker $checker */
-  $checker = \Drupal::service('field_guard.explicit_permission_checker');
-  return AccessResult::forbiddenIf(
-    !$checker->hasExplicitPermission($account, $permission),
-    sprintf("The '%s' permission must be explicitly granted for this field.", $permission),
+    $field_definition,
+    $account,
+    $items,
   );
 }

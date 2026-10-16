@@ -15,8 +15,6 @@ use PHPUnit\Framework\Attributes\Group;
  * Covers the lookup rules, including the ones that are easy to get wrong.
  *
  * @group field_guard
- *
- * @runTestsInSeparateProcesses
  */
 #[Group('field_guard')]
 #[CoversClass(ProtectedFieldMap::class)]
@@ -153,6 +151,20 @@ final class ProtectedFieldMapTest extends UnitTestCase {
 
     $this->assertTrue($map->isProtected('profile', 'compliance_record', 'field_evidence_date'));
     $this->assertNull($map->requiredPermission('profile', 'compliance_record', 'field_evidence_date', 'view'));
+  }
+
+  /**
+   * Empty strings and non-strings are unset, not a permission nobody holds.
+   */
+  public function testPermissionOrNullRejectsEmptyAndNonString(): void {
+    $this->assertSame(
+      'view guarded field',
+      ProtectedFieldMap::permissionOrNull('view guarded field'),
+    );
+    $this->assertNull(ProtectedFieldMap::permissionOrNull(''));
+    $this->assertNull(ProtectedFieldMap::permissionOrNull(NULL));
+    $this->assertNull(ProtectedFieldMap::permissionOrNull(0));
+    $this->assertNull(ProtectedFieldMap::permissionOrNull([]));
   }
 
 }
