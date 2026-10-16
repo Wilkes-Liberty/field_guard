@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\field_guard\Kernel;
 
+use Drupal\Core\Access\AccessResultInterface;
+use Drupal\Core\Cache\CacheableDependencyInterface;
 use Drupal\Core\Entity\EntityAccessControlHandlerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\entity_test\Entity\EntityTest;
@@ -131,7 +133,7 @@ final class CacheabilityTest extends KernelTestBase {
     $this->assertTrue($result->isForbidden(), 'Premise: the definition-level check denies.');
     $this->assertContains(
       self::SETTINGS_TAG,
-      $result->getCacheTags(),
+      $this->cacheable($result)->getCacheTags(),
       'A verdict derived from field_guard.settings must be invalidated when that config changes, or a field stays readable after it was protected.',
     );
   }
@@ -143,7 +145,7 @@ final class CacheabilityTest extends KernelTestBase {
     $result = $this->handler()
       ->fieldAccess('view', $this->definition(), $this->createUser(), NULL, TRUE);
 
-    $contexts = $result->getCacheContexts();
+    $contexts = $this->cacheable($result)->getCacheContexts();
 
     $this->assertNotContains(
       'user.permissions',
@@ -196,7 +198,7 @@ final class CacheabilityTest extends KernelTestBase {
     $this->assertTrue($result->isForbidden(), 'Premise: an unprivileged account is denied.');
     $this->assertContains(
       self::SETTINGS_TAG,
-      $result->getCacheTags(),
+      $this->cacheable($result)->getCacheTags(),
       'Whether this field is protected at all comes from config, so the verdict must carry the config tag.',
     );
   }
@@ -208,8 +210,8 @@ final class CacheabilityTest extends KernelTestBase {
     $entity = EntityTest::create(['name' => 'x', 'field_evidence_date' => '2026-08-01']);
     $entity->save();
 
-    $contexts = $entity->get('field_evidence_date')
-      ->access('view', $this->createUser(), TRUE)
+    $contexts = $this->cacheable($entity->get('field_evidence_date')
+      ->access('view', $this->createUser(), TRUE))
       ->getCacheContexts();
 
     $this->assertContains(
@@ -229,7 +231,7 @@ final class CacheabilityTest extends KernelTestBase {
     $this->assertFalse($result->isForbidden(), 'Premise: an unmapped field is not denied.');
     $this->assertContains(
       self::SETTINGS_TAG,
-      $result->getCacheTags(),
+      $this->cacheable($result)->getCacheTags(),
       'An unprotected verdict still comes from the map, so it must invalidate when the map changes.',
     );
   }
@@ -251,9 +253,20 @@ final class CacheabilityTest extends KernelTestBase {
     $this->assertFalse($result->isForbidden(), 'Premise: an unmapped field is not denied.');
     $this->assertContains(
       self::SETTINGS_TAG,
-      $result->getCacheTags(),
+      $this->cacheable($result)->getCacheTags(),
       'Whether this field is unprotected at all comes from config, so the verdict must carry the config tag.',
     );
+  }
+
+  /**
+   * Narrows a verdict to the cacheable object the assertions read.
+   *
+   * Field access is declared as AccessResultInterface, which does not
+   * include cache metadata. The implementation is cacheable.
+   */
+  private function cacheable(AccessResultInterface $result): CacheableDependencyInterface {
+    $this->assertInstanceOf(CacheableDependencyInterface::class, $result);
+    return $result;
   }
 
 }

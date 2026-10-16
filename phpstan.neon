@@ -1,0 +1,13 @@
+# Drupal.org phpstan config. PHPStan prefers this file over phpstan.neon.dist.
+#
+# The optional field_guard_mcp tools extend classes from drupal/tool and
+# drupal/mcp_sentinel. Drupal.org composer does not install them, so scanning
+# the submodule is unknown-class noise, and a red allow_failure job still
+# sends pipeline mail. Exclude the submodule on drupal.org only. Analysis
+# that installs those packages should pass -c phpstan.neon.dist.
+includes:
+  - phpstan.neon.dist
+
+parameters:
+  excludePaths:
+    - modules/field_guard_mcp
