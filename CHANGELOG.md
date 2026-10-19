@@ -6,6 +6,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.8] - 2026-10-19
+
+### Changed
+- Field access checks run through the `field_guard.access` service.
+  Access results are unchanged.
+
+### Fixed
+- The drupal.org phpstan job no longer sends mail on every push.
+
 ## [1.3.7] - 2026-10-15
 
 ### Fixed
