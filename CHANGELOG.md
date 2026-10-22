@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Document why CheckAccessTool reports `allowed: null` for unguarded fields
+  and treats own-subject exemption as a config flag only. Drop leftover
+  ticket and job-id comments from GitHub CI and the cspell dictionary.
+  Behavior is unchanged.
+
 ## [1.3.8] - 2026-10-19
 
 ### Changed

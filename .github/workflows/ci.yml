@@ -3,7 +3,7 @@ name: CI
 # Test and lint CI for the GitHub mirror. The authoritative test matrix runs on
 # drupal.org GitLab CI (.gitlab-ci.yml); this keeps the GitHub mirror honest too.
 # Self-contained on purpose: it does not call the org reusable workflows, which
-# currently fail at load on every consumer PR (tracked internally as DEV-211).
+# currently fail at load on every consumer PR.
 #
 # Drupal 12 is not released yet, so it cannot be built here; the ^12 half of the
 # support claim is exercised by the GitLab CI next-major opt-in once 12 ships.
