@@ -97,9 +97,14 @@ final class CheckAccessTool extends FieldGuardToolBase {
     $fields = [];
     foreach ($names as $name) {
       $permission = $this->fieldMap->requiredPermission($entityType, $bundle, $name, $operation);
+      // NULL means this module does not speak. False is our deny. True is
+      // only "this module does not deny" — not Drupal's full field access.
+      // Turning NULL into false would claim unguarded fields are forbidden.
       $allowed = $permission === NULL
         ? NULL
         : $this->checker->hasExplicitPermission($this->currentUser, $permission);
+      // The exemption is a config flag only. Resolving the subject here
+      // would make this tool an ownership oracle, which the README forbids.
       $exempt = $permission !== NULL
         && $operation === 'view'
         && $this->fieldMap->viewExemptsOwnSubject($entityType, $bundle, $name);
