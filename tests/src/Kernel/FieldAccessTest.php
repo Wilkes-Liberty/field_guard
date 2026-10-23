@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\Tests\field_guard\Kernel;
 
 use Drupal\Core\Cache\CacheableDependencyInterface;
-use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\entity_test\Entity\EntityTest;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
@@ -60,7 +59,6 @@ final class FieldAccessTest extends KernelTestBase {
       'field_name' => 'field_evidence_date',
       'entity_type' => 'entity_test',
       'type' => 'string',
-      'cardinality' => FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED,
     ])->save();
     FieldConfig::create([
       'field_name' => 'field_evidence_date',

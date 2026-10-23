@@ -83,6 +83,35 @@ final class ConfigSchemaTest extends KernelTestBase {
   }
 
   /**
+   * The own-subject exemption key is a first-class schema member.
+   *
+   * View and edit alone would still validate if the flag were dropped from
+   * schema. Pinning a valid map with the flag set means removing the key
+   * fails this class. Unknown keys stay covered by the closed mapping.
+   */
+  public function testOwnSubjectExemptionKeyIsValid(): void {
+    $data = $this->map([
+      'view' => 'view guarded field',
+      // Only boolean true enables the exemption; schema type is boolean.
+      'view_exempt_own_subject' => TRUE,
+    ]);
+
+    $this->assertCount(
+      0,
+      $this->violations($data),
+      'A well-formed map may opt a field into the own-subject view exemption.',
+    );
+
+    // Saving also exercises ConfigSchemaChecker under strictConfigSchema.
+    $this->config('field_guard.settings')->setData($data)->save();
+    $this->assertTrue(
+      $this->config('field_guard.settings')
+        ->get('protected.profile.employee.field_training_date.view_exempt_own_subject'),
+      'The exemption flag must persist as boolean true, not a lookalike.',
+    );
+  }
+
+  /**
    * One operation alone is valid — omission is how you leave the other open.
    */
   public function testSingleOperationIsValid(): void {

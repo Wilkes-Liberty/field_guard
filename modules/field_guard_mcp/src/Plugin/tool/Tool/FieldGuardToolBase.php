@@ -87,6 +87,10 @@ abstract class FieldGuardToolBase extends McpGovernedToolBase {
    * {@inheritdoc}
    */
   protected function checkGovernedAccess(array $values, AccountInterface $account): AccessResultInterface {
+    // Parent discoveryAccess() already zeros the catalog result. Execution
+    // does not: checkAccess() andIfs this verdict onto commonAccess() and
+    // returns the merge as-is. Without the zero here, an allow would be
+    // permanently cacheable after a grant or revocation.
     return AccessResult::allowedIfHasPermission($account, self::PERMISSION)->setCacheMaxAge(0);
   }
 

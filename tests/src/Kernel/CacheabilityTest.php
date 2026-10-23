@@ -219,6 +219,14 @@ final class CacheabilityTest extends KernelTestBase {
       $contexts,
       'The value-level verdict is derived from the roles the account holds; without user.roles one account\'s verdict can be served to another.',
     );
+    // Role membership and a role's permission list change independently.
+    // user.roles covers an admin plus a later explicit non-admin grant;
+    // a grant or revocation on an existing role needs user.permissions.
+    $this->assertContains(
+      'user.permissions',
+      $contexts,
+      'The value-level verdict also depends on those roles\' permission lists; without user.permissions a grant or revocation on an existing role leaves a cached verdict in place.',
+    );
   }
 
   /**

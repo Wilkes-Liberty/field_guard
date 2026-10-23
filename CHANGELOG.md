@@ -6,6 +6,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Pin the default value-level `user.permissions` cache context, a schema
+  map that includes `view_exempt_own_subject`, and
+  `viewExemptsOwnSubject()` fail-closed cases. Drop unused unlimited
+  cardinality from the access fixture. Document why Field Guard MCP tools
+  zero cache max-age on the execution access merge. Behavior is unchanged.
+
 ## [1.3.9] - 2026-10-23
 
 ### Changed

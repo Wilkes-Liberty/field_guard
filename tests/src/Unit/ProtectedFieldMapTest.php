@@ -154,6 +154,51 @@ final class ProtectedFieldMapTest extends UnitTestCase {
   }
 
   /**
+   * Only boolean TRUE enables the own-subject view exemption.
+   *
+   * Kernel tests set a real boolean and flip the flag off. They never call
+   * this method with a NULL bundle or a lookalike, which is how a later
+   * editor can loosen === TRUE without CI noticing.
+   */
+  public function testViewExemptsOwnSubjectIsFailClosed(): void {
+    $map = $this->mapWith([
+      'profile' => [
+        'compliance_record' => [
+          'field_true' => [
+            'view' => 'view guarded field',
+            'view_exempt_own_subject' => TRUE,
+          ],
+          'field_string' => [
+            'view' => 'view guarded field',
+            'view_exempt_own_subject' => 'true',
+          ],
+          'field_int' => [
+            'view' => 'view guarded field',
+            'view_exempt_own_subject' => 1,
+          ],
+        ],
+      ],
+    ]);
+
+    $this->assertTrue(
+      $map->viewExemptsOwnSubject('profile', 'compliance_record', 'field_true'),
+      'Boolean true is the only value that enables the exemption.',
+    );
+    $this->assertFalse(
+      $map->viewExemptsOwnSubject('profile', NULL, 'field_true'),
+      'A NULL bundle is a base field with no map entry; fail closed.',
+    );
+    $this->assertFalse(
+      $map->viewExemptsOwnSubject('profile', 'compliance_record', 'field_string'),
+      'The string "true" is not boolean TRUE and must not enable the exemption.',
+    );
+    $this->assertFalse(
+      $map->viewExemptsOwnSubject('profile', 'compliance_record', 'field_int'),
+      'The integer 1 is not boolean TRUE and must not enable the exemption.',
+    );
+  }
+
+  /**
    * Empty strings and non-strings are unset, not a permission nobody holds.
    */
   public function testPermissionOrNullRejectsEmptyAndNonString(): void {
