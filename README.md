@@ -147,8 +147,8 @@ like an empty one.
 `field_guard_mcp` exposes two read-only [Tool API](https://www.drupal.org/project/tool)
 plugins that answer the question. It depends on Tool API and
 [MCP Sentinel](https://www.drupal.org/project/mcp_sentinel). The base module depends on
-neither. The submodule declares Drupal `^10.6 || ^11.3` only: MCP Sentinel does not declare
-Drupal 12 yet. The base module keeps its own range.
+neither. The submodule declares Drupal `^10.6 || ^11.3` only, because Tool API
+declares `^10.5 || ^11`. The base module keeps its own range.
 
 | Tool | OAuth scope | Inputs | Returns |
 | --- | --- | --- | --- |

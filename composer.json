@@ -37,7 +37,7 @@
         "drupal/core": "^10.6 || ^11.3 || ^12"
     },
     "suggest": {
-        "drupal/mcp_sentinel": "Required only by the Field Guard MCP submodule (field_guard_mcp): ^2.22. Not a dev requirement: it does not declare Drupal 12, so requiring it would make the next-major pipeline unresolvable.",
+        "drupal/mcp_sentinel": "Required only by the Field Guard MCP submodule (field_guard_mcp): ^2.22. Not a dev requirement: the submodule also depends on Tool API (^10.5 || ^11), which a Drupal 12 pipeline cannot resolve.",
         "drupal/tool": "Required only by the Field Guard MCP submodule (field_guard_mcp): ^1.0.0-beta8."
     }
 }
