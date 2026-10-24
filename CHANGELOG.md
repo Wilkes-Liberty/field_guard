@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- Document why Field Guard MCP tools keep `McpEntityToolTrait`:
+  `doExecute()` calls the trait's `checkRateLimit()`, and dropping the
+  use turns every success into the catch-all refusal. Behavior is
+  unchanged.
 - Pin the default value-level `user.permissions` cache context, a schema
   map that includes `view_exempt_own_subject`, and
   `viewExemptsOwnSubject()` fail-closed cases. Drop unused unlimited
