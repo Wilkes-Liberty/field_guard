@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- Drop unused `McpEntityToolTrait` from Field Guard MCP tools. The tools
+  never loaded entities or called the trait helpers. `McpGovernedToolBase`
+  already supplies governance. Behavior is unchanged.
 - Pin the default value-level `user.permissions` cache context, a schema
   map that includes `view_exempt_own_subject`, and
   `viewExemptsOwnSubject()` fail-closed cases. Drop unused unlimited

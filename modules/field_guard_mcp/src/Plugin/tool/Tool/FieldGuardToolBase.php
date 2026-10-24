@@ -9,7 +9,6 @@ use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\field_guard\ProtectedFieldMap;
 use Drupal\mcp_sentinel\McpPolicyProfileInterface;
-use Drupal\mcp_sentinel\Plugin\tool\Tool\McpEntityToolTrait;
 use Drupal\mcp_sentinel\Plugin\tool\Tool\McpGovernedToolBase;
 use Drupal\mcp_sentinel\Service\McpExfiltrationGuard;
 use Drupal\tool\ExecutableResult;
@@ -22,8 +21,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * text and field values never reach a result.
  */
 abstract class FieldGuardToolBase extends McpGovernedToolBase {
-
-  use McpEntityToolTrait;
 
   /**
    * Permission every tool in this module requires.
