@@ -9,6 +9,7 @@ use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\field_guard\ProtectedFieldMap;
 use Drupal\mcp_sentinel\McpPolicyProfileInterface;
+use Drupal\mcp_sentinel\Plugin\tool\Tool\McpEntityToolTrait;
 use Drupal\mcp_sentinel\Plugin\tool\Tool\McpGovernedToolBase;
 use Drupal\mcp_sentinel\Service\McpExfiltrationGuard;
 use Drupal\tool\ExecutableResult;
@@ -21,6 +22,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * text and field values never reach a result.
  */
 abstract class FieldGuardToolBase extends McpGovernedToolBase {
+
+  // checkRateLimit() lives on this trait, not on McpGovernedToolBase.
+  // doExecute() calls it after the profile resolves. Dropping the use is an
+  // Error; the catch-all then returns this module's refusal for every
+  // success.
+  use McpEntityToolTrait;
 
   /**
    * Permission every tool in this module requires.
