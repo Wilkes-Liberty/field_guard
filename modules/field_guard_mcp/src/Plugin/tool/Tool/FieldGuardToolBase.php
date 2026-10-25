@@ -23,6 +23,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 abstract class FieldGuardToolBase extends McpGovernedToolBase {
 
+  // checkRateLimit() lives on this trait, not on McpGovernedToolBase.
+  // doExecute() calls it after the profile resolves. Dropping the use is an
+  // Error; the catch-all then returns this module's refusal for every
+  // success.
   use McpEntityToolTrait;
 
   /**
