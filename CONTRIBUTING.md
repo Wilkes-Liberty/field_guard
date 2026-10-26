@@ -41,3 +41,8 @@ does not exercise is not a claim.
 Drupal coding standards, enforced by `phpcs.xml.dist`. `declare(strict_types=1)` in new
 PHP files. Comments explain *why*, not *what* — particularly around the access logic,
 where the non-obvious reasoning is the thing worth preserving.
+
+## Changelog fragments
+
+Follow [the changelog workflow](.github/CHANGELOG.md) for independent PR notes
+and lossless release compilation. Existing opt-in entry policy is unchanged.
