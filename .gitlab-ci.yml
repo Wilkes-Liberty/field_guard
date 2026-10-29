@@ -32,6 +32,17 @@ variables:
   OPT_IN_TEST_PREVIOUS_MINOR: '1'
   _AUTORUN_PREVIOUS_MAJOR: 'all'
   _AUTORUN_PREVIOUS_MINOR: 'all'
+  # PHP-only module: no JS, CSS, Twig, or Nightwatch tests. Templates default
+  # eslint, stylelint, and Nightwatch on. Nightwatch's job rule is
+  # SKIP_NIGHTWATCH=0 && OPT_IN_TEST_*, so the previous-major/minor autorun
+  # above would schedule a browser suite on every opted-in variant. Pin all
+  # four skips. Twig CS Fixer already defaults off in the templates; the pin
+  # keeps a future default flip from turning it back on. Leave phpcs,
+  # phpstan, cspell, composer-lint, and phpunit on.
+  SKIP_NIGHTWATCH: '1'
+  SKIP_ESLINT: '1'
+  SKIP_STYLELINT: '1'
+  SKIP_TWIG_CS_FIXER: '1'
   # The `^12` half of the constraint. Deliberately MANUAL rather than autorun:
   # the next major is a moving dev target, and a pipeline that goes red on
   # upstream churn teaches nothing and trains people to ignore the badge. Run it
