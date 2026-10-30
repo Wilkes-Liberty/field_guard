@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.10] - 2026-10-29
+
 ### Changed
 - Document why Field Guard MCP tools keep `McpEntityToolTrait`:
   `doExecute()` calls the trait's `checkRateLimit()`, and dropping the
@@ -16,6 +18,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `viewExemptsOwnSubject()` fail-closed cases. Drop unused unlimited
   cardinality from the access fixture. Document why Field Guard MCP tools
   zero cache max-age on the execution access merge. Behavior is unchanged.
+- Use independent changelog fragments for pull requests and the shared validator for lossless release preparation.
+- Skip Drupal.org GitLab eslint, stylelint, twigcsfixer, and Nightwatch jobs.
+  This module is PHP-only, and Nightwatch would otherwise autorun on every
+  opted-in core variant. phpcs, phpstan, cspell, composer-lint, and phpunit
+  stay on. Module behavior is unchanged.
 
 ## [1.3.9] - 2026-10-23
 
