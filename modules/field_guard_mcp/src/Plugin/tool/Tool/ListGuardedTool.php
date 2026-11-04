@@ -17,20 +17,22 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('List guarded fields'),
   description: new TranslatableMarkup('List the fields Field Guard protects on an entity type, optionally one bundle. For each field: the guarded operations (view, edit), the permission name each one requires, and whether the view guard exempts the record\'s own subject. A guarded field a caller may not view is left out of JSON:API and reads as null in GraphQL, so it looks empty; this list says which fields that can happen to. Names only, never field values. A field missing from the list is not guarded by this module; other access rules may still apply. Returns at most 500 fields and sets "truncated" when there are more.'),
   operation: ToolOperation::Read,
+  // Same MACHINE_NAME the base class re-checks in machineName(). Copies
+  // here would let discovery accept a name that doExecute() then rejects.
   input_definitions: [
     'entity_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity type'),
       description: new TranslatableMarkup('Entity type machine name, for example node.'),
       required: TRUE,
-      constraints: ['Regex' => ['pattern' => '/^[a-z][a-z0-9_]{0,127}$/D']],
+      constraints: ['Regex' => ['pattern' => FieldGuardToolBase::MACHINE_NAME]],
     ),
     'bundle' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('Bundle machine name. Omit for every bundle in the map.'),
       required: FALSE,
-      constraints: ['Regex' => ['pattern' => '/^[a-z][a-z0-9_]{0,127}$/D']],
+      constraints: ['Regex' => ['pattern' => FieldGuardToolBase::MACHINE_NAME]],
     ),
   ],
 )]
