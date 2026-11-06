@@ -6,6 +6,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.11] - 2026-11-06
+
+### Changed
+- Point Field Guard MCP Tool attribute Regex and Count constraints at the
+  `MACHINE_NAME` and `MAX_FIELDS` constants the tools already use at runtime, so
+  discovery and `doExecute()` revalidation cannot drift. Tool behavior is
+  unchanged.
+
 ## [1.3.10] - 2026-10-29
 
 ### Changed
